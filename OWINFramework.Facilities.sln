@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwinFramework.Facilities.TokenStore.Cache.Net40", "OwinFramework.Facilities.TokenStore.Cache\OwinFramework.Facilities.TokenStore.Cache.Net40.csproj", "{FC7C55B4-A55A-41F5-9100-E30AF49C2365}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwinFramework.Facilities.TokenStore.Cache.Net45", "OwinFramework.Facilities.TokenStore.Cache\OwinFramework.Facilities.TokenStore.Cache.Net45.csproj", "{69176031-C740-477F-A4CD-729E28F16F02}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FC7C55B4-A55A-41F5-9100-E30AF49C2365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC7C55B4-A55A-41F5-9100-E30AF49C2365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC7C55B4-A55A-41F5-9100-E30AF49C2365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC7C55B4-A55A-41F5-9100-E30AF49C2365}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69176031-C740-477F-A4CD-729E28F16F02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69176031-C740-477F-A4CD-729E28F16F02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69176031-C740-477F-A4CD-729E28F16F02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69176031-C740-477F-A4CD-729E28F16F02}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
