@@ -56,7 +56,7 @@
     <Compile Include="SharedSecret.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="packages.OwinFramework.Facilities.IdentityStore.Prius.Net40.config" />
     <None Include="readme.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
