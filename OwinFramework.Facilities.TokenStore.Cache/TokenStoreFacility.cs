@@ -24,7 +24,7 @@ namespace OwinFramework.Facilities.TokenStore.Cache
         {
             _cache = cache;
 
-            _configurationRegistration = configuration.Register("/OwinFramework/TokenStore.Cache", c => _configuration = c, new Configuration());
+            _configurationRegistration = configuration.Register("/OwinFramework/Facility/TokenStore.Cache", c => _configuration = c, new Configuration());
         }
 
         public string CreateToken(string tokenType, string purpose, string identity)
