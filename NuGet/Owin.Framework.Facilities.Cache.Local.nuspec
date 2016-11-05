@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Owin.Framework.Facilities.Cache.Local</id>
+    <version>2.1.5</version>
+    <title>Owin.Framework.Facilities.Cache.Local</title>
+    <authors>Martin Halliday</authors>
+    <owners>Martin Halliday</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Owin Framework ICache facility that stores cached data in local memory</description>
+    <copyright>Copyright Martin Halliday 2016</copyright>
+    <releaseNotes>First version</releaseNotes>
+    <summary>Adding this package to your project will provide it with an implementation of ICache.</summary>
+    <projectUrl>https://github.com/Bikeman868/OwinFramework.Facilities/tree/master/Owin.Framework.Facilities.Cache.Local</projectUrl>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <tags>OWIN framework facility cache</tags>
+    <dependencies>
+      <dependency id="Owin.Framework" version="2.1.5" />
+    </dependencies>
+    <references>
+    </references>
+  </metadata>
+  <files>
+    <file src="..\OwinFramework.Facilities.Cache.Local\bin\Net40\Release\OwinFramework.Facilities.Cache.Local.dll" target="lib\net40"/>
+    <file src="..\OwinFramework.Facilities.Cache.Local\bin\Net45\Release\OwinFramework.Facilities.Cache.Local.dll" target="lib\net45"/>
+    <file src="..\*.md" target=""/>
+  </files>
+</package>

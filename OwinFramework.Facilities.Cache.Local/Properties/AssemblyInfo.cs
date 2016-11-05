@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("OwinFramework.Facilities.TokenStore.Cache")]
+[assembly: AssemblyTitle("OwinFramework.Facilities.Cache.Local")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("OwinFramework.Facilities.TokenStore.Cache")]
+[assembly: AssemblyProduct("OwinFramework.Facilities.Cache.Local")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

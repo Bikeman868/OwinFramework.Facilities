@@ -13,7 +13,7 @@
     <summary>Adding this package to your project will provide it with an implementation of ITokenStore that uses the ICache interface to persist tokens.</summary>
     <projectUrl>https://github.com/Bikeman868/OwinFramework.Facilities/tree/master/Owin.Framework.Facilities.TokenStore.Cache</projectUrl>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
-    <tags>OWIN framework analytics report</tags>
+    <tags>OWIN framework facility token</tags>
     <dependencies>
       <dependency id="Owin.Framework" version="2.1.5" />
     </dependencies>
