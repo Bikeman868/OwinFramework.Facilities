@@ -15,6 +15,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		NuGet\Owin.Framework.Facilities.IdentityStore.Prius.nuspec = NuGet\Owin.Framework.Facilities.IdentityStore.Prius.nuspec
 		NuGet\Owin.Framework.Facilities.TokenStore.Cache.nuspec = NuGet\Owin.Framework.Facilities.TokenStore.Cache.nuspec
 		NuGet\Package.cmd = NuGet\Package.cmd
+		packages\repositories.config = packages\repositories.config
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwinFramework.Facilities.Cache.Local.Net45", "OwinFramework.Facilities.Cache.Local\OwinFramework.Facilities.Cache.Local.Net45.csproj", "{C53410A5-D145-468C-A909-D5ACDF257594}"
