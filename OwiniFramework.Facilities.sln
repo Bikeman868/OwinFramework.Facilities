@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwinFramework.Facilities.Id
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwinFramework.Facilities.IdentityStore.Prius.Net45", "OwinFramework.Facilities.IdentityStore.Prius\OwinFramework.Facilities.IdentityStore.Prius.Net45.csproj", "{27F8C322-7B15-4537-84EF-96C420D9D32C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{2028AFCE-4241-466A-826F-CE445892CEEC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,10 @@ Global
 		{27F8C322-7B15-4537-84EF-96C420D9D32C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{27F8C322-7B15-4537-84EF-96C420D9D32C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{27F8C322-7B15-4537-84EF-96C420D9D32C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2028AFCE-4241-466A-826F-CE445892CEEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2028AFCE-4241-466A-826F-CE445892CEEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2028AFCE-4241-466A-826F-CE445892CEEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2028AFCE-4241-466A-826F-CE445892CEEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

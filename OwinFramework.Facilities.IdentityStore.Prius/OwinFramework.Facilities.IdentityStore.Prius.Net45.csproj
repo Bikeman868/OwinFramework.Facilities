@@ -52,8 +52,8 @@
       <HintPath>..\packages\Npgsql.2.2.5\lib\net45\Npgsql.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework, Version=2.1.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.2.1.7\lib\net45\OwinFramework.dll</HintPath>
+    <Reference Include="OwinFramework, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.2.2.0\lib\net45\OwinFramework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Prius.Contracts, Version=1.1.8.16, Culture=neutral, processorArchitecture=MSIL">

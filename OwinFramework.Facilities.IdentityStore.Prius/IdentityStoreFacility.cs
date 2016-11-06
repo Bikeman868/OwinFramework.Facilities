@@ -62,7 +62,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             get { return false; }
         }
 
-        public byte[] AddCertificate(string identity, TimeSpan lifetime, IList<string> purposes)
+        public byte[] AddCertificate(string identity, TimeSpan? lifetime = null, IEnumerable<string> purposes = null)
         {
             throw new NotImplementedException();
         }
@@ -94,7 +94,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             get { return true; }
         }
 
-        public bool AddCredentials(string identity, string userName, string password, bool replaceExisting, IList<string> purposes)
+        public bool AddCredentials(string identity, string userName, string password, bool replaceExisting = true, IEnumerable<string> purposes = null)
         {
             CheckUserNameAllowed(userName);
             CheckPasswordAllowed(password);
@@ -376,32 +376,29 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
         #region Social login
 
-        public IList<string> SocialServices
+        public bool AddSocial(string identity, string userId, string socialService, string authenticationToken, IEnumerable<string> purposes = null, bool replaceExisting = true)
         {
-            get { return new List<string>(); }
-        }
-
-        public bool AddSocial(string identity, string userName, string socialService, IList<string> purposes)
-        {
-            return false;
-        }
-
-        public IAuthenticationResult AuthenticateWithSocial(string userName, string socialService, string authenticationToken)
-        {
-            return new AuthenticationResult
-            {
-                Status = AuthenticationStatus.Unsupported
-            };
+            throw new NotImplementedException();
         }
 
         public bool DeleteAllSocial(string identity)
         {
-            return false;
+            throw new NotImplementedException();
         }
 
-        public bool DeleteSocial(string identity, string userName, string socialService)
+        public bool DeleteSocial(string identity, string socialService)
         {
-            return false;
+            throw new NotImplementedException();
+        }
+
+        public ISocialAuthentication GetSocialAuthentication(string userId, string socialService)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<string> SocialServices
+        {
+            get { throw new NotImplementedException(); }
         }
 
         #endregion
@@ -434,5 +431,6 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                 return new List<string>();
             return purposes.Split(',');
         }
+
     }
 }
