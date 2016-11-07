@@ -15,6 +15,12 @@ namespace OwinFramework.Facilities.Cache.Local
     {
         private readonly IDictionary<string, CacheEntry> _cache = new Dictionary<string, CacheEntry>();
 
+        public void Clear()
+        {
+            lock (_cache)
+                _cache.Clear();
+        }
+
         bool ICache.Delete(string key)
         {
             lock (_cache)
