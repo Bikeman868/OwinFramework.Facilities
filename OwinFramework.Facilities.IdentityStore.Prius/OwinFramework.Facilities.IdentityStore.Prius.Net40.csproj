@@ -95,5 +95,8 @@
     <None Include="packages.OwinFramework.Facilities.IdentityStore.Prius.Net40.config" />
     <None Include="readme.md" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="SqlScripts\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
