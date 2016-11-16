@@ -118,7 +118,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheTokenStoreFacilityTests.cs" />
-    <Compile Include="IdentityStoreTests.cs" />
+    <Compile Include="PriusIdentityStoreTests.cs" />
     <Compile Include="LocalCacheFacilityTests.cs" />
     <Compile Include="MockConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
