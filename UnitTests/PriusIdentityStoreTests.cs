@@ -5,6 +5,7 @@ using Moq.Modules;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using OwinFramework.Facilities.IdentityStore.Prius;
+using OwinFramework.Facilities.IdentityStore.Prius.Exceptions;
 using OwinFramework.InterfacesV1.Facilities;
 using Prius.Contracts.Interfaces;
 using Prius.Contracts.Interfaces.Commands;
@@ -26,6 +27,7 @@ namespace UnitTests
 
             tables.Add("identity", new JArray());
             tables.Add("credentials", new JArray());
+            tables.Add("secrets", new JArray());
 
             var mockedRepository = new MockedRepository("IdentityStore");
             mockedRepository.Add("sp_GetAllIdentities", tables["identity"]);
@@ -34,6 +36,11 @@ namespace UnitTests
             mockedRepository.Add("sp_DeleteIdentityCredentials", new DeleteIdentityCredentialsProcedure(tables));
             mockedRepository.Add("sp_GetIdentity", new GetIdentityProcedure(tables));
             mockedRepository.Add("sp_GetUserNameCredential", new GetUserNameCredentialProcedure(tables));
+
+            mockedRepository.Add("sp_AddSharedSecret", new AddSharedSecretProcedure(tables));
+            mockedRepository.Add("sp_GetSharedSecret", new GetSharedSecretProcedure(tables));
+            mockedRepository.Add("sp_DeleteSharedSecret", new DeleteSharedSecretProcedure(tables));
+            mockedRepository.Add("sp_GetIdentitySharedSecrets", new GetIdentitySharedSecretsProcedure(tables));
 
             var mockContextFactory = GetMock<MockContextFactory, IContextFactory>();
             mockContextFactory.MockedRepository = mockedRepository;
@@ -55,6 +62,8 @@ namespace UnitTests
         [Test]
         public void Should_store_and_check_credentials()
         {
+            Assert.IsTrue(_identityStore.SupportsCredentials);
+
             var identity = _identityStore.CreateIdentity();
 
             const string user = "me@gmail.com";
@@ -142,19 +151,102 @@ namespace UnitTests
         [Test]
         public void Should_not_allow_invalid_passwords()
         {
+            var identity = _identityStore.CreateIdentity();
 
+            const string user = "me@gmail.com";
+            Assert.Throws<InvalidPasswordException>(() => _identityStore.AddCredentials(identity, user, "pass"));
+            Assert.Throws<InvalidPasswordException>(() => _identityStore.AddCredentials(identity, user, ""));
+            Assert.Throws<InvalidPasswordException>(() => _identityStore.AddCredentials(identity, user, new string('p', 200)));
         }
 
         [Test]
         public void Should_not_allow_invalid_usernames()
         {
+            var identity = _identityStore.CreateIdentity();
 
+            const string password = "val1Dpassw0rd";
+            Assert.Throws<InvalidUserNameException>(() => _identityStore.AddCredentials(identity, "u", password));
+            Assert.Throws<InvalidUserNameException>(() => _identityStore.AddCredentials(identity, new string('u', 90), password));
+            Assert.Throws<InvalidUserNameException>(() => _identityStore.AddCredentials(identity, "cool guy", password));
         }
 
         [Test]
         public void Should_not_allow_duplicate_usernames()
         {
+            var identity1 = _identityStore.CreateIdentity();
 
+            const string user = "me@gmail.com";
+            const string password = "password";
+            var success = _identityStore.AddCredentials(identity1, user, password);
+
+            Assert.IsTrue(success);
+
+            var identity2 = _identityStore.CreateIdentity();
+            Assert.Throws<InvalidUserNameException>(() => _identityStore.AddCredentials(identity2, user, password));
+        }
+
+        [Test]
+        public void Should_support_shared_secrets()
+        {
+            Assert.IsTrue(_identityStore.SupportsSharedSecrets);
+
+            var identity = _identityStore.CreateIdentity();
+
+            const string user = "me@gmail.com";
+            const string password = "password";
+            var success = _identityStore.AddCredentials(identity, user, password);
+
+            Assert.IsTrue(success);
+
+            var apiSecret = _identityStore.AddSharedSecret(identity, "API Access", new List<string> { "api" });
+            var profileSecret = _identityStore.AddSharedSecret(identity, "Profile Access", new List<string> { "profile" });
+
+            Assert.IsNotNull(apiSecret);
+            Assert.IsTrue(apiSecret.Length > 16);
+            Assert.IsNotNull(profileSecret);
+            Assert.IsTrue(profileSecret.Length > 16);
+            Assert.AreNotEqual(apiSecret, profileSecret);
+
+            var apiResult = _identityStore.AuthenticateWithSharedSecret(apiSecret);
+            Assert.AreEqual(AuthenticationStatus.Authenticated, apiResult.Status);
+            Assert.AreEqual(identity, apiResult.Identity);
+            Assert.IsNotNull(apiResult.Purposes);
+            Assert.AreEqual(1, apiResult.Purposes.Count);
+            Assert.AreEqual("api", apiResult.Purposes[0]);
+
+            var profileResult = _identityStore.AuthenticateWithSharedSecret(profileSecret);
+            Assert.AreEqual(AuthenticationStatus.Authenticated, profileResult.Status);
+            Assert.AreEqual(identity, profileResult.Identity);
+            Assert.IsNotNull(profileResult.Purposes);
+            Assert.AreEqual(1, profileResult.Purposes.Count);
+            Assert.AreEqual("profile", profileResult.Purposes[0]);
+
+            var secrets = _identityStore.GetAllSharedSecrets(identity).OrderBy(s => s.Name).ToList();
+            Assert.AreEqual(2, secrets.Count);
+            Assert.AreEqual("API Access", secrets[0].Name);
+            Assert.AreEqual("api", secrets[0].Purposes[0]);
+            Assert.AreEqual(apiSecret, secrets[0].Secret);
+            Assert.AreEqual("Profile Access", secrets[1].Name);
+            Assert.AreEqual("profile", secrets[1].Purposes[0]);
+            Assert.AreEqual(profileSecret, secrets[1].Secret);
+
+            _identityStore.DeleteSharedSecret(apiSecret);
+            apiResult = _identityStore.AuthenticateWithSharedSecret(apiSecret);
+            Assert.AreEqual(AuthenticationStatus.NotFound, apiResult.Status);
+        }
+
+        [Test]
+        public void Should_not_support_certificates()
+        {
+            // Replace this test when certificates are supported
+            Assert.IsFalse(_identityStore.SupportsCertificates);
+        }
+
+        [Test]
+        public void Should_not_support_social_login()
+        {
+            // Replace this test when social login is supported
+            Assert.AreEqual(0, _identityStore.SocialServices.Count);
         }
 
         #region Stored procedure mocks
@@ -259,6 +351,87 @@ namespace UnitTests
                 SetData(null, originalRecords.Count - remainingRecords.Count);
 
                 return base.NonQuery(command);
+            }
+        }
+
+        private class AddSharedSecretProcedure : MockedStoredProcedure
+        {
+            private readonly Dictionary<string, JArray> _tables;
+
+            public AddSharedSecretProcedure(Dictionary<string, JArray> tables)
+            {
+                _tables = tables;
+            }
+
+            public override long NonQuery(ICommand command)
+            {
+                var secret = new JObject();
+                secret["identity"] = GetParameterValue(command, "identity", "");
+                secret["name"] = GetParameterValue(command, "name", "");
+                secret["secret"] = GetParameterValue(command, "secret", "");
+                secret["purposes"] = GetParameterValue(command, "purposes", "");
+                _tables["secrets"].Add(secret);
+
+                SetData(null, 1);
+
+                return base.NonQuery(command);
+            }
+        }
+
+        private class GetSharedSecretProcedure : MockedStoredProcedure
+        {
+            private readonly Dictionary<string, JArray> _tables;
+
+            public GetSharedSecretProcedure(Dictionary<string, JArray> tables)
+            {
+                _tables = tables;
+            }
+
+            public override IEnumerable<IMockedResultSet> Query(ICommand command)
+            {
+                var secret = GetParameterValue(command, "secret", "");
+                SetData(_tables["secrets"], null, o => string.Equals(o["secret"].ToString(), secret, StringComparison.Ordinal));
+                return base.Query(command);
+            }
+        }
+
+        private class DeleteSharedSecretProcedure : MockedStoredProcedure
+        {
+            private readonly Dictionary<string, JArray> _tables;
+
+            public DeleteSharedSecretProcedure(Dictionary<string, JArray> tables)
+            {
+                _tables = tables;
+            }
+
+            public override long NonQuery(ICommand command)
+            {
+                var secret = GetParameterValue(command, "secret", "");
+
+                var originalRecords = _tables["secrets"].Values<JObject>().ToList();
+                var remainingRecords = originalRecords.Where(r => !string.Equals(r["secret"].Value<string>(), secret, StringComparison.Ordinal)).ToList();
+                _tables["secrets"] = new JArray(remainingRecords);
+
+                SetData(null, originalRecords.Count - remainingRecords.Count);
+
+                return base.NonQuery(command);
+            }
+        }
+
+        private class GetIdentitySharedSecretsProcedure : MockedStoredProcedure
+        {
+            private readonly Dictionary<string, JArray> _tables;
+
+            public GetIdentitySharedSecretsProcedure(Dictionary<string, JArray> tables)
+            {
+                _tables = tables;
+            }
+
+            public override IEnumerable<IMockedResultSet> Query(ICommand command)
+            {
+                var identity = GetParameterValue(command, "identity", "");
+                SetData(_tables["secrets"], null, o => string.Equals(o["identity"].ToString(), identity, StringComparison.Ordinal));
+                return base.Query(command);
             }
         }
 

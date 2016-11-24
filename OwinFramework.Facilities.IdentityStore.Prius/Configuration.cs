@@ -23,7 +23,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
             MinimumUserNameLength = 3;
             MaximumUserNameLength = 80;
-            UserNameRegex = @"[a-zA-Z0-9@_.\-]*";
+            UserNameRegex = @"^[a-zA-Z0-9@_.-]*$";
 
             MinimumPasswordLength = 8;
             MaximumPasswordLength = 160;

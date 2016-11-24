@@ -354,7 +354,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
         {
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
-                using (var command = _commandFactory.CreateStoredProcedure("sp_GetIdentitySharedSecret"))
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetIdentitySharedSecrets"))
                 {
                     command.AddParameter("identity", identity);
                     using(var rows = context.ExecuteEnumerable<SharedSecretRecord>(command))
@@ -398,7 +398,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
         public IList<string> SocialServices
         {
-            get { throw new NotImplementedException(); }
+            get { return new List<string>(); }
         }
 
         #endregion
