@@ -96,7 +96,10 @@
     <None Include="readme.md" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="SqlScripts\" />
+    <None Include="SqlScripts\MySql Tests.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SqlScripts\MySql.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

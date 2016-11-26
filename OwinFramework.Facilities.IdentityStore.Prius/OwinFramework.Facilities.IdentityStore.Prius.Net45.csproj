@@ -96,5 +96,11 @@
     <None Include="packages.OwinFramework.Facilities.IdentityStore.Prius.Net45.config" />
     <None Include="readme.md" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="SqlScripts\MySql.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SqlScripts\MySql Tests.sql" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

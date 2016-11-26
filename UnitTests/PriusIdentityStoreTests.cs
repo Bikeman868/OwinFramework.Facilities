@@ -32,9 +32,10 @@ namespace UnitTests
             var mockedRepository = new MockedRepository("IdentityStore");
             mockedRepository.Add("sp_GetAllIdentities", tables["identity"]);
             mockedRepository.Add("sp_AddIdentity", new AddIdentityProcedure(tables));
+            mockedRepository.Add("sp_GetIdentity", new GetIdentityProcedure(tables));
+
             mockedRepository.Add("sp_AddCredentials", new AddCredentialsProcedure(tables));
             mockedRepository.Add("sp_DeleteIdentityCredentials", new DeleteIdentityCredentialsProcedure(tables));
-            mockedRepository.Add("sp_GetIdentity", new GetIdentityProcedure(tables));
             mockedRepository.Add("sp_GetUserNameCredential", new GetUserNameCredentialProcedure(tables));
 
             mockedRepository.Add("sp_AddSharedSecret", new AddSharedSecretProcedure(tables));
