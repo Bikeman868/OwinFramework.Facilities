@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OwinFramework.Facilities.Id
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{2028AFCE-4241-466A-826F-CE445892CEEC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleWebSite", "SampleWebSite\SampleWebSite.csproj", "{152D3D99-328E-4CD5-BAA6-1457814160F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,6 +62,10 @@ Global
 		{2028AFCE-4241-466A-826F-CE445892CEEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2028AFCE-4241-466A-826F-CE445892CEEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2028AFCE-4241-466A-826F-CE445892CEEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{152D3D99-328E-4CD5-BAA6-1457814160F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{152D3D99-328E-4CD5-BAA6-1457814160F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{152D3D99-328E-4CD5-BAA6-1457814160F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{152D3D99-328E-4CD5-BAA6-1457814160F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

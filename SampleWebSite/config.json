@@ -1,0 +1,51 @@
+﻿{
+    "middleware": {
+        "exceptions": {
+            "message": "<p>This is a <i>custom</i> message.</p>",
+            "template": "exception.html",
+            "localhost": true,
+            "emailAddress": "bitbucket@mailinator.com",
+            "subject": "Sample web site unhandled exception"
+        },
+        "staticFiles": {
+            "assets": {
+                "staticFilesRootUrl": "/assets",
+                "documentationRootUrl": "",
+                "rootDirectory": "/assets",
+                "enabled": "true",
+                "includeSubFolders": "true",
+                "FileExtensions": [
+                    { "extension": ".html", "mimeType": "text/html" },
+                    { "extension": ".css", "mimeType": "text/css" },
+                    { "extension": ".js", "mimeType": "application/javascript" },
+                    { "extension": ".jpg", "mimeType": "image/jpeg" },
+                    { "extension": ".jpeg", "mimeType": "image/jpeg" }
+                ],
+                "maximumFileSizeToCache": 10000,
+                "totalCacheSize": 1000000,
+                "maximumCacheTime": "00:30:00",
+                "requiredPermission": ""
+            },
+            "pages": {
+                "staticFilesRootUrl": "/",
+                "documentationRootUrl": "",
+                "rootDirectory": "/pages",
+                "enabled": "true",
+                "includeSubFolders": "true",
+                "FileExtensions": [
+                    { "extension": ".html", "mimeType": "text/html" }
+                ],
+                "maximumFileSizeToCache": 10000,
+                "totalCacheSize": 1000000,
+                "maximumCacheTime": "00:30:00",
+                "requiredPermission": ""
+            },
+            "defaultDocument": {
+                "defaultPage": "/home.html"
+            }
+        }
+    },
+    "prius": { 
+
+    }
+}
