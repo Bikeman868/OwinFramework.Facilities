@@ -73,8 +73,8 @@
       <HintPath>..\packages\Owin.Framework.Urchin.2.0.3\lib\net40\OwinFramework.Configuration.Urchin.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework.DefaultDocument, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.DefaultDocument.2.1.0\lib\net40\OwinFramework.DefaultDocument.dll</HintPath>
+    <Reference Include="OwinFramework.DefaultDocument, Version=2.1.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.DefaultDocument.2.1.2\lib\net40\OwinFramework.DefaultDocument.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="OwinFramework.ExceptionReporter, Version=2.1.5.0, Culture=neutral, processorArchitecture=MSIL">
@@ -128,7 +128,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="assets\home.html" />
     <Content Include="assets\main.css" />
+    <Content Include="pages\index.html" />
     <Content Include="pages\home.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

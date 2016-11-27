@@ -58,7 +58,9 @@ namespace SampleWebSite
             // Define separate routes for the types of request that have different OWIN pipelines
             builder.Register(ninject.Get<IRouter>())
                 .AddRoute("api", c => c.Request.Path.StartsWithSegments(new PathString("/api")))
-                .AddRoute("assets", c => c.Request.Path.StartsWithSegments(new PathString("/assets")))
+                .AddRoute("assets", c => 
+                    c.Request.Path.StartsWithSegments(new PathString("/assets")) ||
+                    c.Request.Path.StartsWithSegments(new PathString("/config/assets")))
                 .AddRoute("pages", c => true)
                 .As("Security policy");
 
@@ -70,7 +72,7 @@ namespace SampleWebSite
                 .ConfigureWith(config, "/middleware/exceptions")
                 .RunFirst();
 
-            // This middleware will rewrite requetts for the web site root to a request for
+            // This middleware will rewrite requests for the web site root to a request for
             // a specific page on the site.
             builder.Register(ninject.Get<OwinFramework.DefaultDocument.DefaultDocumentMiddleware>())
                 .As("Default document")
@@ -91,6 +93,15 @@ namespace SampleWebSite
                 .As("Page resources")
                 .ConfigureWith(config, "/middleware/staticFiles/pages")
                 .RunOnRoute("pages");
+
+            // This middleware will return 404 (not found) response always. It is configured
+            // here to run after all other middleware so that 404 responses will only be
+            // returned if no other middleware handled the request first.
+            builder.Register(ninject.Get<OwinFramework.NotFound.NotFoundMiddleware>())
+                .As("Not found")
+                .RunOnRoute("pages")
+                .RunOnRoute("assets")
+                .RunLast();
 
             app.UseBuilder(builder);
         }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Ioc.Modules;
 using OwinFramework.Interfaces.Builder;
+using OwinFramework.Interfaces.Routing;
 using Urchin.Client.Interfaces;
 
 namespace SampleWebSite
@@ -20,6 +21,7 @@ namespace SampleWebSite
                 // External dependencies
                 new IocRegistration().Init<IConfigurationStore>(),
                 new IocRegistration().Init<IBuilder>(),
+                new IocRegistration().Init<IRouter>(),
             };
         }
     }

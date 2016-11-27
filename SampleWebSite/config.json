@@ -10,8 +10,8 @@
         "staticFiles": {
             "assets": {
                 "staticFilesRootUrl": "/assets",
-                "documentationRootUrl": "",
-                "rootDirectory": "/assets",
+                "documentationRootUrl": "/config/assets",
+                "rootDirectory": "~\\assets",
                 "enabled": "true",
                 "includeSubFolders": "true",
                 "FileExtensions": [
@@ -28,8 +28,8 @@
             },
             "pages": {
                 "staticFilesRootUrl": "/",
-                "documentationRootUrl": "",
-                "rootDirectory": "/pages",
+                "documentationRootUrl": "/config/pages",
+                "rootDirectory": "~\\pages",
                 "enabled": "true",
                 "includeSubFolders": "true",
                 "FileExtensions": [
@@ -39,10 +39,12 @@
                 "totalCacheSize": 1000000,
                 "maximumCacheTime": "00:30:00",
                 "requiredPermission": ""
-            },
-            "defaultDocument": {
-                "defaultPage": "/home.html"
             }
+        },
+        "defaultDocument": {
+            "defaultPage": "/home.html",
+            "defaultPage": "/assets/home.html",
+            "documentationRootUrl": "/config/defaultDocument"
         }
     },
     "prius": { 
