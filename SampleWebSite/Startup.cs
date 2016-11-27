@@ -90,7 +90,7 @@ namespace SampleWebSite
             // pages on the 'pages' route which contains additional middleware to identify
             // the user.
             builder.Register(ninject.Get<OwinFramework.StaticFiles.StaticFilesMiddleware>())
-                .As("Page resources")
+                .As("Protected resources")
                 .ConfigureWith(config, "/middleware/staticFiles/pages")
                 .RunOnRoute("pages");
 
@@ -102,6 +102,21 @@ namespace SampleWebSite
                 .RunOnRoute("pages")
                 .RunOnRoute("assets")
                 .RunLast();
+
+            // This middleware is part of this application. It provides a very simple API
+            // that can add 2 numbers together. The API is trivial because we are trying to
+            // demonstrate the other things around it
+            builder.Register(ninject.Get<Middleware.ApiMiddleware>())
+                .As("Api middleware")
+                .RunAfter("Api security")
+                .RunOnRoute("api");
+
+            // This middleware is part of this application. It blocks API requests that do not
+            // contain a valid token. Tokens are generated and inserted into web pages so that
+            // they can call the API using javascript
+            builder.Register(ninject.Get<Middleware.ApiSecurityMiddleware>())
+                .As("Api security")
+                .RunOnRoute("api");
 
             app.UseBuilder(builder);
         }

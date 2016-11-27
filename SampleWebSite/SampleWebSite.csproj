@@ -65,8 +65,8 @@
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework, Version=2.1.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.2.1.5\lib\net40\OwinFramework.dll</HintPath>
+    <Reference Include="OwinFramework, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.2.2.0\lib\net40\OwinFramework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="OwinFramework.Configuration.Urchin, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
@@ -91,6 +91,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -102,6 +103,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Middleware\ApiMiddleware.cs" />
+    <Compile Include="Middleware\ApiSecurityMiddleware.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
@@ -117,10 +120,6 @@
     <ProjectReference Include="..\OwinFramework.Facilities.Cache.Local\OwinFramework.Facilities.Cache.Local.Net40.csproj">
       <Project>{ea62932d-a9d3-4139-9c8a-ccbb2cb68fd3}</Project>
       <Name>OwinFramework.Facilities.Cache.Local.Net40</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\OwinFramework.Facilities.IdentityStore.Prius\OwinFramework.Facilities.IdentityStore.Prius.Net40.csproj">
-      <Project>{79fe0011-b4a8-4cbd-9dba-120223ee4318}</Project>
-      <Name>OwinFramework.Facilities.IdentityStore.Prius.Net40</Name>
     </ProjectReference>
     <ProjectReference Include="..\OwinFramework.Facilities.TokenStore.Cache\OwinFramework.Facilities.TokenStore.Cache.Net40.csproj">
       <Project>{fc7c55b4-a55a-41f5-9100-e30af49c2365}</Project>

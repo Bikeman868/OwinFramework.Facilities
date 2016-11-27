@@ -41,7 +41,15 @@ To try this sample on your local machine follow these steps:
 
 8. In Visual Studio, right click the 'SampleWebSite' project and choose `Debug|Start new instance`.
 
-That's it.
+That's it. Now try some of these URLs in your browser:
+
+http://sample.facilities.owin.local/config/assets
+http://sample.facilities.owin.local/config/pages
+http://sample.facilities.owin.local/config/defaultdocument
+http://sample.facilities.owin.local/
+http://sample.facilities.owin.local/home.html
+http://sample.facilities.owin.local/blah.html
+http://sample.facilities.owin.local/api/add?a=12&b=65
 
 ## What this site does
 
