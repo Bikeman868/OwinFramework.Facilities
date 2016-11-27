@@ -129,6 +129,7 @@
   <ItemGroup>
     <Content Include="assets\home.html" />
     <Content Include="assets\main.css" />
+    <Content Include="pages\calculator.html" />
     <Content Include="pages\index.html" />
     <Content Include="pages\home.html" />
   </ItemGroup>

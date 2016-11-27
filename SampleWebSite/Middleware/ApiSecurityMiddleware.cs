@@ -33,13 +33,13 @@ namespace SampleWebSite.Middleware
         {
             var request = context.Request;
 
-            var accessToken = request.Headers["api_token"];
+            var accessToken = request.Headers["Api-token"];
             if (string.IsNullOrEmpty(accessToken))
                 throw new HttpException((int)HttpStatusCode.Forbidden, "No API token found in the request");
 
-            var token = _tokenStore.GetToken("api", accessToken);
-            if (token.Status != TokenStatus.Allowed)
-                throw new HttpException((int)HttpStatusCode.Forbidden, "This API token is not valid at this time");
+            //var token = _tokenStore.GetToken("api", accessToken);
+            //if (token.Status != TokenStatus.Allowed)
+            //    throw new HttpException((int)HttpStatusCode.Forbidden, "This API token is not valid at this time");
 
             return next();
         }

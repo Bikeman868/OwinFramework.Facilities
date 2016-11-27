@@ -6,3 +6,7 @@ h1 {
     font-size: 12pt;
     font-family: sans-serif;
 }
+
+input[type="number"] {
+    width: 40px;
+}

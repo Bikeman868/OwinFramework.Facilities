@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Calculator</title>
+    <link rel="stylesheet" type="text/css" href="/assets/main.css">
+</head>
+<body>
+    <script>
+        function addNumbers(){
+            var value1 = document.getElementById("value1").value;
+            var value2 = document.getElementById("value2").value;
+
+            var apiToken = document.getElementById("apiToken").value;
+
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "/api/add?a=" + value1 + "&b=" + value2, false);
+            xhttp.setRequestHeader("Content-type", "application/json");
+            xhttp.setRequestHeader("Api-token", apiToken);
+            xhttp.send();
+
+            if (xhttp.status == 200) {
+                var response = JSON.parse(xhttp.responseText);
+                document.getElementById("answer").innerHTML = response.answer;
+                document.getElementById("error").innerHTML = "";
+            }
+            else {
+                document.getElementById("error").innerHTML = xhttp.statusText;
+            }
+        }
+    </script>
+    
+    <input type="hidden" id="apiToken" value="{{apiToken}}"/>
+
+    <h1>Calculator</h1>
+    <p>Adds two numbers together and shows the reault</p>
+    <div>
+        <input type="number" id="value1" value="51"/>
+        &nbsp<span class="operation">+</span>&nbsp;
+        <input type="number" id="value2" value ="12"/>
+        &nbsp;
+        <input type="button" onclick="addNumbers();" value="="/>
+        &nbsp<span class="answer" id="answer"></span>
+        <p><span id="error"/></p>
+    </div>
+    <p><i>Physical path = /pages/calculator.html</i></p>
+</body>
+</html>
