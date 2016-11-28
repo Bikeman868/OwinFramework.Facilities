@@ -38,12 +38,11 @@
                 "maximumFileSizeToCache": 10000,
                 "totalCacheSize": 1000000,
                 "maximumCacheTime": "00:30:00",
-                "requiredPermission": ""
+                "requiredPermission": "user"
             }
         },
         "defaultDocument": {
             "defaultPage": "/home.html",
-            "defaultPage": "/assets/home.html",
             "documentationRootUrl": "/config/defaultDocument"
         }
     },
