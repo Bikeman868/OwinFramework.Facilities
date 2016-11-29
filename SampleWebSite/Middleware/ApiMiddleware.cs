@@ -9,7 +9,7 @@ using System.Web;
 namespace SampleWebSite.Middleware
 {
     /// <summary>
-    /// This is deliberately kept very minimal since we are not trying
+    /// This is deliberately kept very minimal because we are not trying
     /// to demonstrate how to write an API in this sample application.
     /// This API just takes two numbers and returns the sum of these two numbers.
     /// </summary>

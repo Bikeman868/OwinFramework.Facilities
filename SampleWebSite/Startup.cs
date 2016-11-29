@@ -92,7 +92,8 @@ namespace SampleWebSite
             builder.Register(ninject.Get<OwinFramework.StaticFiles.StaticFilesMiddleware>())
                 .As("Protected resources")
                 .ConfigureWith(config, "/middleware/staticFiles/pages")
-                .RunOnRoute("pages");
+                .RunOnRoute("pages")
+                .RunAfter("API token");
 
             // This middleware will return 404 (not found) response always. It is configured
             // here to run after all other middleware so that 404 responses will only be
@@ -117,6 +118,15 @@ namespace SampleWebSite
             builder.Register(ninject.Get<Middleware.ApiSecurityMiddleware>())
                 .As("Api security")
                 .RunOnRoute("api");
+
+            // This middleware is part of the application. It buffers HTML pages and replaces
+            // {{apiToken}} in the HML with an actual api token. This provides a token to
+            // Javascript so that it can call the API.
+            builder.Register(ninject.Get<Middleware.ApiTokenMiddleware>())
+                .As("Api token")
+                .RunOnRoute("pages");
+
+            
 
             app.UseBuilder(builder);
         }

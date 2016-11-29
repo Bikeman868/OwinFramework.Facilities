@@ -104,6 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Middleware\ApiMiddleware.cs" />
+    <Compile Include="Middleware\ApiTokenMiddleware.cs" />
     <Compile Include="Middleware\ApiSecurityMiddleware.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
