@@ -9,6 +9,7 @@ using Owin;
 using OwinFramework.Builder;
 using OwinFramework.Interfaces.Builder;
 using OwinFramework.Interfaces.Routing;
+using OwinFramework.InterfacesV1.Middleware;
 using SampleWebSite;
 
 // Make this class the entry point for OWIN hosting
@@ -34,7 +35,7 @@ namespace SampleWebSite
             var configFile = new FileInfo(AppDomain.CurrentDomain.SetupInformation.ApplicationBase + "config.json");
             var configurationFileSource = ninject.Get<FileSource>().Initialize(configFile, TimeSpan.FromSeconds(5));
             
-            // Use the OwinFramework to build the OWIN pipeline
+            // Use the Owin Framework to build the OWIN pipeline
             BuildPipeline(app, ninject);
 
             // Register an OWIN app disposing handler that frees resources
@@ -49,10 +50,10 @@ namespace SampleWebSite
 
         private void BuildPipeline(IAppBuilder app, IResolutionRoot ninject)
         {
-            // Ask IOC to construct an instance of the OwinFramework pipeline builder
+            // Ask IOC to construct an instance of the Owin Framework pipeline builder
             var builder = ninject.Get<IBuilder>();
 
-            // Ask IOC to construct an instance of the OwinFramework configuration mechanism
+            // Ask IOC to construct an instance of the Owin Framework configuration mechanism
             var config = ninject.Get<IConfiguration>();
 
             // Define separate routes for the types of request that have different OWIN pipelines
@@ -80,7 +81,9 @@ namespace SampleWebSite
 
             // This middleware will map the path of http requests onto the file system path and
             // return the contents of the files in response to the request. This instance runs
-            // on the 'assets' route which has no security constraints
+            // on the 'assets' route which does not identify the caller, does not establish a 
+            // session, and has no security restrictions so that requests are handled as
+            // efficiently as possible.
             builder.Register(ninject.Get<OwinFramework.StaticFiles.StaticFilesMiddleware>())
                 .As("Public resources")
                 .ConfigureWith(config, "/middleware/staticFiles/assets")
@@ -88,7 +91,8 @@ namespace SampleWebSite
 
             // This is another instance of the static files middleware, but this one serves
             // pages on the 'pages' route which contains additional middleware to identify
-            // the user.
+            // the user. Tells the Authorization middleware that the caller must have the 
+            // 'user' permission to retrieve these files.
             builder.Register(ninject.Get<OwinFramework.StaticFiles.StaticFilesMiddleware>())
                 .As("Protected resources")
                 .ConfigureWith(config, "/middleware/staticFiles/pages")
@@ -96,7 +100,7 @@ namespace SampleWebSite
                 .RunAfter("API token");
 
             // This middleware will return 404 (not found) response always. It is configured
-            // here to run after all other middleware so that 404 responses will only be
+            // to run after all other middleware so that 404 responses will only be
             // returned if no other middleware handled the request first.
             builder.Register(ninject.Get<OwinFramework.NotFound.NotFoundMiddleware>())
                 .As("Not found")
@@ -104,29 +108,43 @@ namespace SampleWebSite
                 .RunOnRoute("assets")
                 .RunLast();
 
-            // This middleware is part of this application. It provides a very simple API
+            // This middleware is part of this sample application. It provides a very simple API
             // that can add 2 numbers together. The API is trivial because we are trying to
-            // demonstrate the other things around it
+            // demonstrate the other things around it, not how to write an API
             builder.Register(ninject.Get<Middleware.ApiMiddleware>())
                 .As("Api middleware")
                 .RunAfter("Api security")
                 .RunOnRoute("api");
 
-            // This middleware is part of this application. It blocks API requests that do not
-            // contain a valid token. Tokens are generated and inserted into web pages so that
-            // they can call the API using javascript
+            // This middleware is part of this sample application. It blocks API requests that do not
+            // contain a valid API access token. API access tokens are generated and inserted into 
+            // web pages by the ApiTokenMiddleware so that the web pages can call the API using javascript
             builder.Register(ninject.Get<Middleware.ApiSecurityMiddleware>())
                 .As("Api security")
                 .RunOnRoute("api");
 
-            // This middleware is part of the application. It buffers HTML pages and replaces
+            // This middleware is part of this sample application. It buffers HTML pages and replaces
             // {{apiToken}} in the HML with an actual api token. This provides a token to
             // Javascript so that it can call the API.
             builder.Register(ninject.Get<Middleware.ApiTokenMiddleware>())
                 .As("Api token")
+                .RunAfter<IAuthorization>(null, false)
                 .RunOnRoute("pages");
 
-            
+            // This middleware is IIdentification middleware. It identifies the user from
+            // a cookie and provides postback endoints to login, logout and create an account.
+            // Note that this middleware is not designed to be secure, it is designed to be
+            // simple and easy to understand.
+            builder.Register(ninject.Get<Middleware.IdentificationMiddleware>())
+                .As("Identification")
+                .RunOnRoute("pages");
+
+            // This middleware is IAuthorization middleware. It gives all users the
+            // 'user' permission and all anonymous visitors no permissions.
+            builder.Register(ninject.Get<Middleware.AuthorizationMiddleware>())
+                .As("Authorization")
+                .RunAfter<IIdentification>(null, false)
+                .RunOnRoute("pages");
 
             app.UseBuilder(builder);
         }

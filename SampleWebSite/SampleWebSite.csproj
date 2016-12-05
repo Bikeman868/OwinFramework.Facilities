@@ -33,8 +33,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Ioc.Modules, Version=1.1.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Ioc.Modules.1.1.3\lib\net40\Ioc.Modules.dll</HintPath>
+    <Reference Include="Ioc.Modules, Version=1.1.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ioc.Modules.1.1.4\lib\net40\Ioc.Modules.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Ioc.Modules.Ninject, Version=1.1.3.0, Culture=neutral, processorArchitecture=MSIL">
@@ -53,12 +53,24 @@
       <HintPath>..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Mono.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\Npgsql.2.2.5\lib\net40\Mono.Security.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="MySql.Data, Version=6.9.9.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <HintPath>..\packages\MySql.Data.6.9.9\lib\net40\MySql.Data.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net40\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
       <HintPath>..\packages\Ninject.3.2.2.0\lib\net40\Ninject.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Npgsql, Version=2.2.5.0, Culture=neutral, PublicKeyToken=5d8b90d52f46fda7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Npgsql.2.2.5\lib\net40\Npgsql.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
@@ -69,8 +81,8 @@
       <HintPath>..\packages\Owin.Framework.2.2.0\lib\net40\OwinFramework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework.Configuration.Urchin, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.Urchin.2.0.3\lib\net40\OwinFramework.Configuration.Urchin.dll</HintPath>
+    <Reference Include="OwinFramework.Configuration.Urchin, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.Urchin.2.2.0\lib\net40\OwinFramework.Configuration.Urchin.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="OwinFramework.DefaultDocument, Version=2.1.2.0, Culture=neutral, processorArchitecture=MSIL">
@@ -87,6 +99,14 @@
     </Reference>
     <Reference Include="OwinFramework.StaticFiles, Version=2.1.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Owin.Framework.StaticFiles.2.1.2\lib\net40\OwinFramework.StaticFiles.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Prius.Contracts, Version=1.1.9.17, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Prius.1.1.9\lib\net40\Prius.Contracts.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Prius.Orm, Version=1.1.9.17, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Prius.1.1.9\lib\net40\Prius.Orm.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -106,6 +126,8 @@
     <Compile Include="Middleware\ApiMiddleware.cs" />
     <Compile Include="Middleware\ApiTokenMiddleware.cs" />
     <Compile Include="Middleware\ApiSecurityMiddleware.cs" />
+    <Compile Include="Middleware\AuthorizationMiddleware.cs" />
+    <Compile Include="Middleware\IdentificationMiddleware.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
@@ -115,12 +137,18 @@
     <None Include="config.json" />
     <None Include="packages.config" />
     <None Include="readme.md" />
-    <None Include="Web.config" />
+    <None Include="Web.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OwinFramework.Facilities.Cache.Local\OwinFramework.Facilities.Cache.Local.Net40.csproj">
       <Project>{ea62932d-a9d3-4139-9c8a-ccbb2cb68fd3}</Project>
       <Name>OwinFramework.Facilities.Cache.Local.Net40</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OwinFramework.Facilities.IdentityStore.Prius\OwinFramework.Facilities.IdentityStore.Prius.Net40.csproj">
+      <Project>{79fe0011-b4a8-4cbd-9dba-120223ee4318}</Project>
+      <Name>OwinFramework.Facilities.IdentityStore.Prius.Net40</Name>
     </ProjectReference>
     <ProjectReference Include="..\OwinFramework.Facilities.TokenStore.Cache\OwinFramework.Facilities.TokenStore.Cache.Net40.csproj">
       <Project>{fc7c55b4-a55a-41f5-9100-e30af49c2365}</Project>

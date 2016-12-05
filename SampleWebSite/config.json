@@ -42,7 +42,7 @@
             }
         },
         "defaultDocument": {
-            "defaultPage": "/home.html",
+            "defaultPage": "/assets/home.html",
             "documentationRootUrl": "/config/defaultDocument"
         }
     },

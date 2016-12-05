@@ -25,19 +25,21 @@ The 'pages' folder contains static html files that require the user to create an
 
 To try this sample on your local machine follow these steps:
 
-1. If you havn't installed IIS already then install it now.
+1. If you have not installed IIS already then install it now.
 
-2. If you don't have MySQL installed then install it now.
+2. If you do not have MySQL installed then install it now.
 
 3. Run the MySQL script in OwinFramework.Facilities.IdentityStore.Prius\SqlScripts\MySql.sql to create an identity store database.
 
 4. Edit the config.json file and modify the connection string to one that will connect the MySQL database you just created.
 
-5. In the IIS Services Manager create a new web site with the host name `sample.facilities.owin.local` and the physical path set to the folder containing this readme file. Make sure the AppPool is set to .Net 4 Integrated mode.
+5. In the IIS Services Manager create a new web site with the host name `sample.facilities.owin.local` and the physical path set 
+to the folder containing this readme file. Make sure the AppPool is set to .Net 4 Integrated mode.
 
 6. Make sure that IIS has permission to access this location in your file system.
 
-7. Edit your `hosts` file on your computer to include this line `27.0.0.1 sample.facilities.owin.local`. Note that the `hosts` file is usually in `C:\Windows\System32\drivers\etc'
+7. Edit your `hosts` file on your computer to include this line `27.0.0.1 sample.facilities.owin.local`. Note that the `hosts`
+file is usually in `C:\Windows\System32\drivers\etc'
 
 8. In Visual Studio, right click the 'SampleWebSite' project and choose `Debug|Start new instance`.
 
@@ -49,13 +51,23 @@ http://sample.facilities.owin.local/config/defaultdocument
 http://sample.facilities.owin.local/
 http://sample.facilities.owin.local/home.html
 http://sample.facilities.owin.local/blah.html
+http://sample.facilities.owin.local/calculator.html
 http://sample.facilities.owin.local/api/add?a=12&b=65
 
 ## What this site does
 
-This sample site contains some static web pages, some static assets (like css and images).
-This site requires the user to create an account and sign in when they access any of the html pages.
-This site does not check user identity when serving static files that are not pages.
+This sample site contains some static html pages and some static assets (like css and images).
+
+This site requires the user to create an account and sign in when they access any any page except the home page. The
+home page can be viewed anonymously and contains the register/login UI.
+
+This site does not check user identity when serving static files like css and images so these are served as
+fast as possible. Note that frameworks like ASP.NET establish session for each request, and the session 
+server does not allow multiple requests to own the sesion at the same time which effectively serializes 
+these requests. We can avoid these problems using OWIN framework by configuring different OWIN pipelines
+for different types of request so that each request is processed with as few resources and as little blocking
+as possible.
+
 This site contains an API that is called from Javascript. The API has a different security scheme than the html pages.
 
 ## Why is this sample site here

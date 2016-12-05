@@ -16,7 +16,6 @@
 
             var xhttp = new XMLHttpRequest();
             xhttp.open("GET", "/api/add?a=" + value1 + "&b=" + value2, false);
-            xhttp.setRequestHeader("Content-type", "application/json");
             xhttp.setRequestHeader("Api-token", apiToken);
             xhttp.send();
 
@@ -31,6 +30,7 @@
         }
     </script>
     
+    <!--Making this a hidden input will include it with any postbacks-->
     <input type="hidden" id="apiToken" value="{{apiToken}}"/>
 
     <h1>Calculator</h1>
