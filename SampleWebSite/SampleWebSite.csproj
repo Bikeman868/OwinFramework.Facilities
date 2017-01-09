@@ -77,12 +77,12 @@
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.2.2.0\lib\net40\OwinFramework.dll</HintPath>
+    <Reference Include="OwinFramework, Version=2.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.2.2.2\lib\net40\OwinFramework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework.Configuration.Urchin, Version=2.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.Urchin.2.2.0\lib\net40\OwinFramework.Configuration.Urchin.dll</HintPath>
+    <Reference Include="OwinFramework.Configuration.Urchin, Version=2.2.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.Urchin.2.2.2\lib\net40\OwinFramework.Configuration.Urchin.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="OwinFramework.DefaultDocument, Version=2.1.2.0, Culture=neutral, processorArchitecture=MSIL">
@@ -128,6 +128,7 @@
     <Compile Include="Middleware\ApiSecurityMiddleware.cs" />
     <Compile Include="Middleware\AuthorizationMiddleware.cs" />
     <Compile Include="Middleware\IdentificationMiddleware.cs" />
+    <Compile Include="Middleware\SessionMiddleware.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />

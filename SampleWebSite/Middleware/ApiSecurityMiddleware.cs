@@ -11,7 +11,7 @@ using OwinFramework.InterfacesV1.Facilities;
 
 namespace SampleWebSite.Middleware
 {
-    // This is an example of ow to use the ITokenStore facility to check the
+    // This is an example of how to use the ITokenStore facility to check the
     // status of a token.
     // This middleware looks for a token in the headers of the request and
     // validates this token with the token store.

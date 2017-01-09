@@ -143,7 +143,12 @@ namespace SampleWebSite
             // 'user' permission and all anonymous visitors no permissions.
             builder.Register(ninject.Get<Middleware.AuthorizationMiddleware>())
                 .As("Authorization")
-                .RunAfter<IIdentification>(null, false)
+                .RunOnRoute("pages");
+
+            // This middleware is ISession middleware. It maintains a dictionary per
+            // identity that the application can use to persist state between requests
+            builder.Register(ninject.Get<Middleware.InProcessSession>())
+                .As("Session")
                 .RunOnRoute("pages");
 
             app.UseBuilder(builder);

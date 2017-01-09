@@ -18,6 +18,8 @@ namespace OwinFramework.Facilities.TokenStore.Cache
         private readonly IDisposable _configurationRegistration;
         private Configuration _configuration;
 
+        private const string _cacheCategory = "token";
+
         public TokenStoreFacility(
             ICache cache,
             IConfiguration configuration)
@@ -38,7 +40,7 @@ namespace OwinFramework.Facilities.TokenStore.Cache
                 Purposes = string.IsNullOrEmpty(purpose) ? null : new List<string> { purpose }
             };
             var cacheKey = _configuration.CachePrefix + value;
-            _cache.Put(cacheKey, token, _configuration.Lifetime);
+            _cache.Put(cacheKey, token, _configuration.Lifetime, _cacheCategory);
 
             return value;
         }
@@ -54,7 +56,7 @@ namespace OwinFramework.Facilities.TokenStore.Cache
                 Purposes = purpose == null ? null : purpose.ToList()
             };
             var cacheKey = _configuration.CachePrefix + value;
-            _cache.Put(cacheKey, token, _configuration.Lifetime);
+            _cache.Put(cacheKey, token, _configuration.Lifetime, _cacheCategory);
 
             return value;
         }
@@ -62,7 +64,7 @@ namespace OwinFramework.Facilities.TokenStore.Cache
         public bool DeleteToken(string token)
         {
             var cacheKey = _configuration.CachePrefix + token;
-            return _cache.Delete(cacheKey);
+            return _cache.Delete(cacheKey, _cacheCategory);
         }
 
         public IToken GetToken(string tokenType, string token, string purpose, string identity)
@@ -76,7 +78,7 @@ namespace OwinFramework.Facilities.TokenStore.Cache
             };
 
             var cacheKey = _configuration.CachePrefix + token;
-            var cachedToken = _cache.Get<CachedToken>(cacheKey);
+            var cachedToken = _cache.Get<CachedToken>(cacheKey, null, null, _cacheCategory);
 
             if (cachedToken == null) 
                 return result;

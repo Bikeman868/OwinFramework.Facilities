@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using OwinFramework.InterfacesV1.Facilities;
@@ -21,13 +20,13 @@ namespace OwinFramework.Facilities.Cache.Local
                 _cache.Clear();
         }
 
-        bool ICache.Delete(string key)
+        bool ICache.Delete(string key, string category)
         {
             lock (_cache)
                 return _cache.Remove(key);
         }
 
-        T ICache.Get<T>(string key, T defaultValue, TimeSpan? lockTime)
+        T ICache.Get<T>(string key, T defaultValue, TimeSpan? lockTime, string category)
         {
             while (true)
             {
@@ -59,7 +58,7 @@ namespace OwinFramework.Facilities.Cache.Local
             }
         }
 
-        bool ICache.Put<T>(string key, T value, TimeSpan? lifespan)
+        bool ICache.Put<T>(string key, T value, TimeSpan? lifespan, string category)
         {
             lock (_cache)
             {

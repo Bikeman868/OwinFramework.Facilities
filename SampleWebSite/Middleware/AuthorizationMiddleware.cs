@@ -21,6 +21,11 @@ namespace SampleWebSite.Middleware
 
         string IMiddleware.Name { get; set; }
 
+        public AuthorizationMiddleware()
+        {
+            this.RunAfter<IIdentification>(null, false);
+        }
+
         public Task Invoke(IOwinContext context, Func<Task> next)
         {
             var authorization = (Authorization)context.GetFeature<IUpstreamAuthorization>();
