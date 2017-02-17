@@ -39,6 +39,11 @@ namespace SampleWebSite
             {
                 return (T)(typeof (T).GetConstructor(Type.EmptyTypes).Invoke(null));
             }
+
+            public object Create(Type type)
+            {
+                return (type.GetConstructor(Type.EmptyTypes).Invoke(null));
+            }
         }
 
         private class PriusErrorReporter: Prius.Contracts.Interfaces.External.IErrorReporter

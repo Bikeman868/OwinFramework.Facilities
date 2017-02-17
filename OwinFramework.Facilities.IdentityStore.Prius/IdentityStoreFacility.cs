@@ -46,9 +46,11 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                 command.AddParameter("identity", identity);
                 using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
                 {
-                    var rowsAffected = context.ExecuteNonQuery(command);
-                    if (rowsAffected != 1)
-                        throw new IdentityStoreException("The new identity failed to be added to the database");
+                    using (var reader = context.ExecuteReader(command))
+                    {
+                        if (!reader.Read())
+                            throw new IdentityStoreException("The new identity failed to be added to the database");
+                    }
                 }
             }
 
@@ -116,11 +118,11 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteIdentityCredentials"))
                     {
                         command.AddParameter("identity", identity);
-                        var rowsAffected = context.ExecuteNonQuery(command);
+                        context.ExecuteNonQuery(command);
                     }
                 }
 
-                using (var command = _commandFactory.CreateStoredProcedure("sp_AddCredentials"))
+                using (var command = _commandFactory.CreateStoredProcedure("sp_AddCredential"))
                 {
                     command.AddParameter("identity", identity);
                     command.AddParameter("userName", userName);
@@ -128,9 +130,9 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     command.AddParameter("version", version);
                     command.AddParameter("hash", hash);
                     command.AddParameter("salt", salt);
+                    using (var reader = context.ExecuteReader(command))
                     {
-                        var rowsAffected = context.ExecuteNonQuery(command);
-                        return rowsAffected == 1;
+                        return reader.Read();
                     }
                 }
             }
@@ -302,7 +304,11 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     command.AddParameter("name", name);
                     command.AddParameter("secret", secret);
                     command.AddParameter("purposes", purposeString);
-                    var rowsAffected = context.ExecuteNonQuery(command);
+                    using (var reader = context.ExecuteReader(command))
+                    {
+                        if (!reader.Read())
+                            throw new IdentityStoreException("Failed to add shared secret");
+                    }
                 }
             }
 

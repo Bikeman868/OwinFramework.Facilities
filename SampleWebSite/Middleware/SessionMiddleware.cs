@@ -48,7 +48,7 @@ namespace SampleWebSite.Middleware
                         }
                         else
                         {
-                            session.EstablishSession();
+                            session.EstablishSession(identification.Identity);
                             _sessions.Add(identification.Identity, session);
                         }
                     }
@@ -69,9 +69,15 @@ namespace SampleWebSite.Middleware
 
             public bool HasSession { get { return _sessionVariables != null; } }
             public bool SessionRequired;
+            public string SessionId { get; private set; }
 
-            public bool EstablishSession()
+            public Session()
             {
+            }
+
+            public bool EstablishSession(string sessionId)
+            {
+                SessionId = sessionId;
                 SessionRequired = true;
                 if (!HasSession)
                     _sessionVariables = new ConcurrentDictionary<string, object>(StringComparer.OrdinalIgnoreCase);

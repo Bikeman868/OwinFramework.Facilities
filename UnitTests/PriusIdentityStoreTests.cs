@@ -34,7 +34,7 @@ namespace UnitTests
             mockedRepository.Add("sp_AddIdentity", new AddIdentityProcedure(tables));
             mockedRepository.Add("sp_GetIdentity", new GetIdentityProcedure(tables));
 
-            mockedRepository.Add("sp_AddCredentials", new AddCredentialsProcedure(tables));
+            mockedRepository.Add("sp_AddCredential", new AddCredentialProcedure(tables));
             mockedRepository.Add("sp_DeleteIdentityCredentials", new DeleteIdentityCredentialsProcedure(tables));
             mockedRepository.Add("sp_GetUserNameCredential", new GetUserNameCredentialProcedure(tables));
 
@@ -261,14 +261,15 @@ namespace UnitTests
                 _tables = tables;
             }
 
-            public override long NonQuery(ICommand command)
+            public override IEnumerable<IMockedResultSet> Query(ICommand command)
             {
+                var identity = GetParameterValue(command, "identity", "");
                 var newIdentity = new JObject();
-                newIdentity["identity"] = GetParameterValue(command, "identity", "");
+                newIdentity["identity"] = identity;
                 _tables["identity"].Add(newIdentity);
 
-                SetData(null, 1);
-                return base.NonQuery(command);
+                SetData(_tables["identity"], null, o => o["identity"].ToString() == identity);
+                return base.Query(command);
             }
         }
 
@@ -289,16 +290,16 @@ namespace UnitTests
             }
         }
 
-        private class AddCredentialsProcedure : MockedStoredProcedure
+        private class AddCredentialProcedure : MockedStoredProcedure
         {
             private readonly Dictionary<string, JArray> _tables;
 
-            public AddCredentialsProcedure(Dictionary<string, JArray> tables)
+            public AddCredentialProcedure(Dictionary<string, JArray> tables)
             {
                 _tables = tables;
             }
 
-            public override long NonQuery(ICommand command)
+            public override IEnumerable<IMockedResultSet> Query(ICommand command)
             {
                 var credential = new JObject();
                 credential["identity"] = GetParameterValue(command, "identity", "");
@@ -309,9 +310,8 @@ namespace UnitTests
                 credential["salt"] = GetParameterValue<byte[]>(command, "salt", null);
                 _tables["credentials"].Add(credential);
 
-                SetData(null, 1);
-
-                return base.NonQuery(command);
+                SetData(_tables["credentials"], null, o => o == credential);
+                return base.Query(command);
             }
         }
 
@@ -364,7 +364,7 @@ namespace UnitTests
                 _tables = tables;
             }
 
-            public override long NonQuery(ICommand command)
+            public override IEnumerable<IMockedResultSet> Query(ICommand command)
             {
                 var secret = new JObject();
                 secret["identity"] = GetParameterValue(command, "identity", "");
@@ -373,9 +373,8 @@ namespace UnitTests
                 secret["purposes"] = GetParameterValue(command, "purposes", "");
                 _tables["secrets"].Add(secret);
 
-                SetData(null, 1);
-
-                return base.NonQuery(command);
+                SetData(_tables["secrets"], null, o => o == secret);
+                return base.Query(command);
             }
         }
 

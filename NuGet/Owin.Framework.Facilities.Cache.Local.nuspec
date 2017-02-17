@@ -15,7 +15,7 @@
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <tags>OWIN framework facility cache</tags>
     <dependencies>
-      <dependency id="Owin.Framework" version="2.2.2" />
+      <dependency id="Owin.Framework" version="2.2.9" />
     </dependencies>
     <references>
     </references>
