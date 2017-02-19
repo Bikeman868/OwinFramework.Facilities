@@ -9,13 +9,15 @@ USE `identity`;
 
 CREATE TABLE IF NOT EXISTS `tbl_credential`
 (
-  `credential_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `identity_id` bigint(20) unsigned NOT NULL,
-  `username` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `purposes` varchar(2048) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `version` int(11) NOT NULL,
-  `hash` varbinary(32) NOT NULL,
-  `salt` varbinary(16) NOT NULL,
+  `credential_id` BIGINT(20) unsigned NOT NULL AUTO_INCREMENT,
+  `identity_id` BIGINT(20) unsigned NOT NULL,
+  `username` VARCHAR(80) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `purposes` VARCHAR(2048) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `version` INT(11) NOT NULL,
+  `hash` VARBINARY(32) NOT NULL,
+  `salt` VARBINARY(16) NOT NULL,
+  `fail_count` INT unsigned DEFAULT 0,
+  `locked` DATETIME DEFAULT NULL,
   PRIMARY KEY (`credential_id`),
   KEY `ix_identity` (`identity_id`),
   UNIQUE INDEX `ix_username` (`username`)
@@ -23,26 +25,61 @@ CREATE TABLE IF NOT EXISTS `tbl_credential`
 
 CREATE TABLE IF NOT EXISTS `tbl_identity`
 (
-  `identity_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `identity` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0',
+  `identity_id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `identity` VARCHAR(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '0',
   PRIMARY KEY (`identity_id`),
   UNIQUE INDEX `ix_identity` (`identity`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `tbl_secret`
 (
-  `secret_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `identity_id` bigint(20) NOT NULL,
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `secret` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `secret_id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `identity_id` BIGINT(20) NOT NULL,
+  `name` VARCHAR(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `secret` VARCHAR(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `purposes` VARCHAR(2048) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`secret_id`),
   KEY `ix_identity` (`identity_id`),
   UNIQUE INDEX `ix_secret` (`secret`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `tbl_authenticate`
+(
+  `authenticate_id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `when` DATETIME NOT NULL,
+  `identity_id` BIGINT(20) NOT NULL,
+  `purposes` VARCHAR(2048) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `remember_me_token` VARCHAR(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `authenticate_method` VARCHAR(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `method_id` BIGINT(20) NOT NULL,
+  `expires` DATETIME DEFAULT NULL,
+  PRIMARY KEY (`authenticate_id`),
+  KEY `ix_identity` (`identity_id`),
+  UNIQUE INDEX `ix_remember_me_token` (`remember_me_token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tbl_audit`
+(
+  `audit_id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `when` DATETIME NOT NULL,
+  `who_id` BIGINT(20) DEFAULT NULL,
+  `reason` VARCHAR(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `identity_id` BIGINT(20) NOT NULL,
+  `action` VARCHAR(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `original_value` VARCHAR(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `new_value` VARCHAR(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`audit_id`),
+  KEY `ix_identity` (`identity_id`),
+  KEY `ix_who` (`who_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+/********************************************************************/
+
 DELIMITER //
 CREATE PROCEDURE `sp_AddCredential`
 (
+	IN `who_id` BIGINT UNSIGNED,
+	IN `reason` VARCHAR(50),
 	IN `identity` VARCHAR(50), 
 	IN `username` VARCHAR(80), 
 	IN `purposes` VARCHAR(2048), 
@@ -62,6 +99,25 @@ BEGIN
 	WHERE
 		i.identity = identity;
 		
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Add credential',
+		NULL,
+		`username`
+	);
+	
 	INSERT INTO tbl_credential
 	(
 		`identity_id`,
@@ -98,9 +154,13 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_AddIdentity`
 (
+	IN `who_id` BIGINT UNSIGNED,
+	IN `reason` VARCHAR(50),
 	IN `identity` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
+	DECLARE identity_id BIGINT UNSIGNED;
+	
 	INSERT INTO tbl_identity
 	(
 		identity
@@ -108,22 +168,46 @@ BEGIN
 		identity
 	);
 	
+	SELECT LAST_INSERT_ID() INTO `identity_id`;
+	
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Add identity',
+		NULL,
+		`identity`
+	);
+
 	SELECT
 		i.identity_id,
 		i.identity
 	FROM
 		tbl_identity i
 	WHERE
-		i.identity_id = LAST_INSERT_ID();
+		i.identity_id = `identity_id`;
 END//
 DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE `sp_AddSharedSecret`
 (
+	IN `who_id` BIGINT UNSIGNED,
+	IN `reason` VARCHAR(50),
 	IN `identity` VARCHAR(50), 
 	IN `name` VARCHAR(100), 
-	IN `secret` VARCHAR(50)
+	IN `secret` VARCHAR(50),
+	IN `purposes` VARCHAR(2048)
 ) DETERMINISTIC
 BEGIN	
 	DECLARE identity_id BIGINT UNSIGNED;
@@ -137,15 +221,36 @@ BEGIN
 	WHERE
 		i.identity = identity;
 		
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Add secret',
+		NULL,
+		CONCAT(`identity`, ' ', `name`)
+	);
+
 	INSERT INTO tbl_secret
 	(
 		`identity_id`,
 		`name`,
-		`secret`
+		`secret`,
+		`purposes`
 	)VALUES(
 		`identity_id`,
 		`name`,
-		`secret`
+		`secret`,
+		`purposes`
 	);
 	
 	SELECT
@@ -153,7 +258,8 @@ BEGIN
 		`identity`,
 		s.`identity_id`,
 		s.`name`,
-		s.`secret`
+		s.`secret`,
+		s.`purposes`
 	FROM
 		tbl_secret s
 	WHERE
@@ -161,9 +267,143 @@ BEGIN
 END//
 DELIMITER ;
 
+/********************************************************************/
+
+DELIMITER //
+CREATE PROCEDURE `sp_AuthenticateSuccess`
+(
+	IN `identity` VARCHAR(50), 
+	IN `purposes` VARCHAR(2048),
+	IN `remember_me_token` VARCHAR(20),
+	IN `authenticate_method` VARCHAR(20),
+	IN `method_id` BIGINT UNSIGNED,
+	IN `expires` DATETIME
+) DETERMINISTIC
+BEGIN	
+	DECLARE identity_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = identity;
+		
+	INSERT INTO tbl_authenticate
+	(
+		`when`,
+		`identity_id`,
+		`purposes`,
+		`remember_me_token`,
+		`authenticate_method`,
+		`method_id`,
+		`expires`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`identity_id`,
+		`purposes`,
+		`remember_me_token`,
+		`authenticate_method`,
+		`method_id`,
+		`expires`
+	);
+	
+	IF `authenticate_method` = 'Credentials' THEN
+		UPDATE
+			tbl_credential c
+		SET
+			c.fail_count = 0,
+			c.locked = NULL
+		WHERE
+			c.credential_id = `method_id`;
+	END IF;
+	
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_AuthenticateFail`
+(
+	IN `identity` VARCHAR(50), 
+	IN `authenticate_method` VARCHAR(20),
+	IN `method_id` BIGINT UNSIGNED,
+	OUT `fail_count` INT UNSIGNED
+) DETERMINISTIC
+BEGIN	
+	DECLARE identity_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = identity;
+		
+	IF `authenticate_method` = 'Credentials' THEN
+		SELECT
+			c.fail_count
+		INTO
+			`fail_count`
+		FROM
+			tbl_credential c
+		WHERE
+			c.credential_id = `method_id`;
+
+		SET fail_count = fail_count + 1;
+		
+		UPDATE
+			tbl_credential c
+		SET
+			c.fail_count = `fail_count`
+		WHERE
+			c.credential_id = `method_id`;
+	END IF;
+	
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_LockUsername`
+(
+	IN `username` VARCHAR(80)
+) DETERMINISTIC
+BEGIN	
+	UPDATE
+		tbl_credential c
+	SET
+		c.locked = UTC_TIMESTAMP()
+	WHERE
+		c.username = `username`;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_UnlockUsername`
+(
+	IN `username` VARCHAR(80)
+) DETERMINISTIC
+BEGIN	
+	UPDATE
+		tbl_credential c
+	SET
+		c.locked = NULL,
+		c.fail_count = 0
+	WHERE
+		c.username = `username`;
+END//
+DELIMITER ;
+
+/********************************************************************/
+
 DELIMITER //
 CREATE PROCEDURE `sp_DeleteIdentityCredentials`
 (
+	IN `who_id` BIGINT UNSIGNED,
+	IN `reason` VARCHAR(50),
 	IN `identity` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
@@ -178,6 +418,25 @@ BEGIN
 	WHERE
 		i.identity = identity;
 		
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Delete credentials',
+		NULL,
+		NULL
+	);
+
 	DELETE 
 	FROM 
 		c USING tbl_credential AS c
@@ -189,9 +448,41 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_DeleteUsernameCredentials`
 (
+	IN `who_id` BIGINT UNSIGNED,
+	IN `reason` VARCHAR(50),
 	IN `username` VARCHAR(80)
 ) DETERMINISTIC
 BEGIN
+	DECLARE identity_id BIGINT UNSIGNED;
+	
+	SELECT
+		c.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_credential c
+	WHERE
+		c.username = username;
+
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Delete username',
+		`username`,
+		NULL
+	);
+
 	DELETE 
 	FROM 
 		c USING tbl_credential AS c
@@ -203,9 +494,41 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_DeleteSharedSecret`
 (
+	IN `who_id` BIGINT UNSIGNED,
+	IN `reason` VARCHAR(50),
 	IN `secret` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
+	DECLARE identity_id BIGINT UNSIGNED;
+	
+	SELECT
+		s.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_secret s
+	WHERE
+		s.secret = secret;
+
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Delete secret',
+		`secret`,
+		NULL
+	);
+
 	DELETE 
 	FROM 
 		s USING tbl_secret AS s
@@ -213,6 +536,30 @@ BEGIN
 		s.secret = secret;
 END//
 DELIMITER ;
+
+/********************************************************************/
+
+DELIMITER //
+CREATE PROCEDURE `sp_Purge`
+(
+	IN `start_date` DATETIME
+) DETERMINISTIC
+BEGIN
+	DELETE 
+	FROM 
+		a USING tbl_audit AS a
+	WHERE 
+		a.`when` < start_date;
+
+	DELETE 
+	FROM 
+		a USING tbl_authenticate AS a
+	WHERE 
+		a.`when` < start_date;
+END//
+DELIMITER ;
+
+/********************************************************************/
 
 DELIMITER //
 CREATE PROCEDURE `sp_GetIdentity`
@@ -267,11 +614,12 @@ CREATE PROCEDURE `sp_GetSharedSecret`
 ) DETERMINISTIC
 BEGIN
 	SELECT
-		s.secret_id,
-		s.identity_id,
-		s.name,
-		s.secret,
-		i.identity
+		s.`secret_id`,
+		s.`identity_id`,
+		s.`name`,
+		s.`secret`,
+		i.`identity`,
+		s.`purposes`
 	FROM
 		tbl_secret s
 			JOIN
@@ -295,7 +643,9 @@ BEGIN
 		c.`purposes`,
 		c.`version`,
 		c.`hash`,
-		c.`salt`
+		c.`salt`,
+		c.`fail_count`,
+		c.`locked`
 	FROM
 		tbl_credential c
 			JOIN
@@ -304,6 +654,92 @@ BEGIN
 		c.username = username;
 END//
 DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_GetAudit`
+(
+	IN `identity_id` BIGINT UNSIGNED
+) DETERMINISTIC
+BEGIN
+	SELECT
+		a.`when`,
+		a.who_id,
+		i1.identity AS who_identity,
+		a.reason,
+		a.identity_id,
+		i2.identity AS identity,
+		a.`action`,
+		a.original_value,
+		a.new_value
+	FROM
+		tbl_audit a
+			LEFT JOIN
+		tbl_identity i1 ON a.who_id = i1.identity_id
+			LEFT JOIN
+		tbl_identity i2 ON a.identity_id = i2.identity_id
+	WHERE
+		a.who_id = `identity_id`
+			OR
+		a.identity_id = `identity_id`
+	ORDER BY
+		a.audit_id DESC
+	LIMIT 5000;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_GetIdentityAuthentications`
+(
+	IN `identity_id` BIGINT UNSIGNED
+) DETERMINISTIC
+BEGIN
+	SELECT
+		a.authenticate_id,
+		a.`when`,
+		a.identity_id,
+		i.identity,
+		a.purposes,
+		a.remember_me_token,
+		a.authenticate_method,
+		a.method_id,
+		a.expires
+	FROM
+		tbl_authenticate a
+			JOIN
+		tbl_identity i ON a.identity_id = i.identity_id
+	WHERE
+		a.identity_id = `identity_id`
+	ORDER BY
+		a.`when` DESC
+	LIMIT 5000;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_GetAuthenticationToken`
+(
+	IN `remember_me_token` VARCHAR(20)
+) DETERMINISTIC
+BEGIN
+	SELECT
+		a.authenticate_id,
+		a.`when`,
+		a.identity_id,
+		i.identity,
+		a.purposes,
+		a.remember_me_token,
+		a.authenticate_method,
+		a.method_id,
+		a.expires
+	FROM
+		tbl_authenticate a
+			JOIN
+		tbl_identity i ON a.identity_id = i.identity_id
+	WHERE
+		a.remember_me_token = `remember_me_token`;
+END//
+DELIMITER ;
+
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -65,12 +65,12 @@
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework, Version=2.2.9.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.2.2.9\lib\net45\OwinFramework.dll</HintPath>
+    <Reference Include="OwinFramework, Version=2.2.10.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.2.2.10\lib\net45\OwinFramework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework.Mocks, Version=2.2.9.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.Mocks.2.2.9\lib\net45\OwinFramework.Mocks.dll</HintPath>
+    <Reference Include="OwinFramework.Mocks, Version=2.2.10.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.Mocks.2.2.10\lib\net45\OwinFramework.Mocks.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Prius.Contracts, Version=2.0.1.20, Culture=neutral, processorArchitecture=MSIL">

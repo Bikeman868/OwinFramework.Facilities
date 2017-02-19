@@ -262,13 +262,12 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
         private void ComputeHash(string password, int version, byte[] salt, out byte[] hash)
         {
-            byte[] passwordBytes;
             byte[] dataToHash;
             HashAlgorithm hashProvider;
 
+            var passwordBytes = Encoding.UTF8.GetBytes(password);
             if (version == 1)
             {
-                passwordBytes = Encoding.UTF8.GetBytes(password);
                 dataToHash = new byte[salt.Length + passwordBytes.Length];
                 salt.CopyTo(dataToHash, 0);
                 passwordBytes.CopyTo(dataToHash, salt.Length);
