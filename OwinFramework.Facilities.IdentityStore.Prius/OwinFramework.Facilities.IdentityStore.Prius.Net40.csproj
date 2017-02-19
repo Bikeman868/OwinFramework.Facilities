@@ -76,6 +76,8 @@
     <Compile Include="AuthenticationResult.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Exceptions\InvalidUserNameException.cs" />
+    <Compile Include="Records\AuditRecord.cs" />
+    <Compile Include="Records\AuthenticateRecord.cs" />
     <Compile Include="Records\SharedSecretRecord.cs" />
     <Compile Include="Records\CredentialRecord.cs" />
     <Compile Include="Records\IdentityRecord.cs" />

@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS `tbl_audit`
 DELIMITER //
 CREATE PROCEDURE `sp_AddCredential`
 (
-	IN `who_id` BIGINT UNSIGNED,
+	IN `who_identity` VARCHAR(50),
 	IN `reason` VARCHAR(50),
 	IN `identity` VARCHAR(50), 
 	IN `username` VARCHAR(80), 
@@ -89,6 +89,16 @@ CREATE PROCEDURE `sp_AddCredential`
 ) DETERMINISTIC
 BEGIN
 	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
 	
 	SELECT
 		i.identity_id
@@ -154,12 +164,22 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_AddIdentity`
 (
-	IN `who_id` BIGINT UNSIGNED,
+	IN `who_identity` VARCHAR(50),
 	IN `reason` VARCHAR(50),
 	IN `identity` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
 	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
 	
 	INSERT INTO tbl_identity
 	(
@@ -202,7 +222,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_AddSharedSecret`
 (
-	IN `who_id` BIGINT UNSIGNED,
+	IN `who_identity` VARCHAR(50),
 	IN `reason` VARCHAR(50),
 	IN `identity` VARCHAR(50), 
 	IN `name` VARCHAR(100), 
@@ -211,6 +231,16 @@ CREATE PROCEDURE `sp_AddSharedSecret`
 ) DETERMINISTIC
 BEGIN	
 	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
 	
 	SELECT
 		i.identity_id
@@ -372,12 +402,43 @@ CREATE PROCEDURE `sp_LockUsername`
 	IN `username` VARCHAR(80)
 ) DETERMINISTIC
 BEGIN	
+	DECLARE identity_id BIGINT UNSIGNED;
+
 	UPDATE
 		tbl_credential c
 	SET
 		c.locked = UTC_TIMESTAMP()
 	WHERE
 		c.username = `username`;
+
+	SELECT
+		c.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_credential c
+	WHERE
+		c.username = `username`;
+
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		NULL,
+		'Authentication failed',
+		`identity_id`,
+		'Account locked',
+		NULL,
+		NULL
+	);
+	
 END//
 DELIMITER ;
 
@@ -387,6 +448,8 @@ CREATE PROCEDURE `sp_UnlockUsername`
 	IN `username` VARCHAR(80)
 ) DETERMINISTIC
 BEGIN	
+	DECLARE identity_id BIGINT UNSIGNED;
+
 	UPDATE
 		tbl_credential c
 	SET
@@ -394,6 +457,34 @@ BEGIN
 		c.fail_count = 0
 	WHERE
 		c.username = `username`;
+		
+	SELECT
+		c.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_credential c
+	WHERE
+		c.username = `username`;
+
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		NULL,
+		'Lock expired',
+		`identity_id`,
+		'Account unlocked',
+		NULL,
+		NULL
+	);
 END//
 DELIMITER ;
 
@@ -402,12 +493,22 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_DeleteIdentityCredentials`
 (
-	IN `who_id` BIGINT UNSIGNED,
+	IN `who_identity` VARCHAR(50),
 	IN `reason` VARCHAR(50),
 	IN `identity` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
 	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
 	
 	SELECT
 		i.identity_id
@@ -448,12 +549,22 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_DeleteUsernameCredentials`
 (
-	IN `who_id` BIGINT UNSIGNED,
+	IN `who_identity` VARCHAR(50),
 	IN `reason` VARCHAR(50),
 	IN `username` VARCHAR(80)
 ) DETERMINISTIC
 BEGIN
 	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
 	
 	SELECT
 		c.identity_id
@@ -494,13 +605,23 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_DeleteSharedSecret`
 (
-	IN `who_id` BIGINT UNSIGNED,
+	IN `who_identity` VARCHAR(50),
 	IN `reason` VARCHAR(50),
 	IN `secret` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
 	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
 	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
+
 	SELECT
 		s.identity_id
 	INTO

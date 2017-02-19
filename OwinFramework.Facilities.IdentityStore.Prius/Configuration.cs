@@ -16,6 +16,10 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
         public int MaximumPasswordLength { get; set; }
         public string PasswordRegex { get; set; }
 
+        public TimeSpan LockDuration { get; set; }
+        public int FailedLoginsToLock { get; set; }
+        public TimeSpan RememberMeFor { get; set; }
+        
         public Configuration()
         {
             PriusRepositoryName = "IdentityStore";
@@ -28,6 +32,10 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             MinimumPasswordLength = 8;
             MaximumPasswordLength = 160;
             PasswordRegex = @".*";
+
+            LockDuration = TimeSpan.FromHours(4);
+            FailedLoginsToLock = 5;
+            RememberMeFor = TimeSpan.FromDays(90);
         }
     }
 }

@@ -4,6 +4,9 @@ namespace OwinFramework.Facilities.IdentityStore.Prius.Records
 {
     internal class SharedSecretRecord
     {
+        [Mapping("secret_id")]
+        public long SecretId { get; set; }
+        
         [Mapping("identity")]
         public string Identity { get; set; }
 

@@ -82,7 +82,9 @@
     <Compile Include="IdentityStoreFacility.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Records\AuthenticateRecord.cs" />
     <Compile Include="Records\CredentialRecord.cs" />
+    <Compile Include="Records\AuditRecord.cs" />
     <Compile Include="Records\IdentityRecord.cs" />
     <Compile Include="Records\SharedSecretRecord.cs" />
     <Compile Include="SharedSecret.cs" />

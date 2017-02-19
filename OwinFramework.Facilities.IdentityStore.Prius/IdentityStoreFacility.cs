@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -43,6 +44,8 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
             using (var command = _commandFactory.CreateStoredProcedure("sp_AddIdentity"))
             {
+                command.AddParameter("who_identity", identity);
+                command.AddParameter("reason", "Create identity");
                 command.AddParameter("identity", identity);
                 using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
                 {
@@ -117,6 +120,8 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                 {
                     using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteIdentityCredentials"))
                     {
+                        command.AddParameter("who_identity", identity);
+                        command.AddParameter("reason", "Replace existing");
                         command.AddParameter("identity", identity);
                         context.ExecuteNonQuery(command);
                     }
@@ -124,6 +129,8 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
                 using (var command = _commandFactory.CreateStoredProcedure("sp_AddCredential"))
                 {
+                    command.AddParameter("who_identity", identity);
+                    command.AddParameter("reason", "Add credentials");
                     command.AddParameter("identity", identity);
                     command.AddParameter("userName", userName);
                     command.AddParameter("purposes", purposeString);
@@ -141,6 +148,10 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
         public IAuthenticationResult AuthenticateWithCredentials(string userName, string password)
         {
             CredentialRecord credential;
+            var result = new AuthenticationResult
+            {
+                Status = AuthenticationStatus.Authenticated
+            };
 
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
@@ -150,43 +161,148 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     using (var rows = context.ExecuteEnumerable<CredentialRecord>(command))
                     {
                         credential = rows.FirstOrDefault();
-                        if (credential == null)
+                    }
+                }
+            }
+
+            if (credential == null)
+            {
+                result.Status = AuthenticationStatus.NotFound;
+            }
+            else
+            {
+                result.Identity = credential.Identity;
+                result.Purposes = SplitPurposes(credential.Purposes);
+
+                if (credential.Locked.HasValue)
+                {
+                    if (credential.Locked.Value + _configuration.LockDuration < DateTime.UtcNow)
+                    {
+                        using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
                         {
-                            return new AuthenticationResult
+                            using (var command = _commandFactory.CreateStoredProcedure("sp_UnlockUsername"))
                             {
-                                Status = AuthenticationStatus.NotFound
-                            };
+                                command.AddParameter("userName", userName);
+                                context.ExecuteNonQuery(command);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        result.Status = AuthenticationStatus.Locked;
+                    }
+                }
+            }
+
+            if (result.Status == AuthenticationStatus.Authenticated)
+            {
+                byte[] hash;
+                ComputeHash(password, credential.Version, credential.Salt, out hash);
+
+                if (hash.Length != credential.Hash.Length)
+                {
+                    result.Status = AuthenticationStatus.InvalidCredentials;
+                }
+                else
+                {
+                    for (var i = 0; i < hash.Length; i++)
+                    {
+                        if (hash[i] != credential.Hash[i])
+                        {
+                            result.Status = AuthenticationStatus.InvalidCredentials;
+                            break;
                         }
                     }
                 }
             }
 
+            switch (result.Status)
+            {
+                case AuthenticationStatus.Authenticated:
+                {
+                    result.RememberMeToken = Guid.NewGuid().ToShortString(false);
+                    using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+                    {
+                        using (var command = _commandFactory.CreateStoredProcedure("sp_AuthenticateSuccess"))
+                        {
+                            command.AddParameter("identity", credential.Identity);
+                            command.AddParameter("purposes", credential.Purposes);
+                            command.AddParameter("remember_me_token", result.RememberMeToken);
+                            command.AddParameter("authenticate_method", "Credentials");
+                            command.AddParameter("method_id", credential.CredentialId);
+                            command.AddParameter("expires", DateTime.UtcNow + _configuration.RememberMeFor);
+                            context.ExecuteNonQuery(command);
+                        }
+                    }
+                    break;
+                }
+                case AuthenticationStatus.InvalidCredentials:
+                {
+                    using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+                    {
+                        int failCount;
+                        using (var command = _commandFactory.CreateStoredProcedure("sp_AuthenticateFail"))
+                        {
+                            command.AddParameter("identity", credential.Identity);
+                            command.AddParameter("authenticate_method", "Credentials");
+                            command.AddParameter("method_id", credential.CredentialId);
+                            var failCountParam = command.AddParameter("fail_count",SqlDbType.Int);
+                            context.ExecuteNonQuery(command);
+                            failCount = (int)failCountParam.Value;
+                        }
+                        if (failCount >= _configuration.FailedLoginsToLock)
+                        {
+                            using (var command = _commandFactory.CreateStoredProcedure("sp_LockUsername"))
+                            {
+                                command.AddParameter("userName", userName);
+                                context.ExecuteNonQuery(command);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        public IAuthenticationResult RememberMe(string rememberMeToken)
+        {
+            AuthenticateRecord authenticateRecord;
             var result = new AuthenticationResult
             {
-                Identity = credential.Identity,
-                Purposes = SplitPurposes(credential.Purposes),
-                Status = AuthenticationStatus.Authenticated
+                Status = AuthenticationStatus.Authenticated,
+                RememberMeToken = rememberMeToken
             };
-
-            byte[] hash;
-            ComputeHash(password, credential.Version, credential.Salt, out hash);
-
-            if (hash.Length != credential.Hash.Length)
+            
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
-                result.Status = AuthenticationStatus.InvalidCredentials;
-            }
-            else
-            {
-                for (var i = 0; i < hash.Length; i++)
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetAuthenticationToken"))
                 {
-                    if (hash[i] != credential.Hash[i])
+                    command.AddParameter("remember_me_token", rememberMeToken);
+                    using (var rows = context.ExecuteEnumerable<AuthenticateRecord>(command))
                     {
-                        result.Status = AuthenticationStatus.InvalidCredentials;
-                        break;
+                        authenticateRecord = rows.FirstOrDefault();
                     }
                 }
             }
 
+            if (authenticateRecord == null)
+            {
+                result.Status = AuthenticationStatus.NotFound;
+            }
+            else
+            {
+                if (authenticateRecord.Expires.HasValue && authenticateRecord.Expires > DateTime.UtcNow)
+                {
+                    result.Status = AuthenticationStatus.Expired;
+                }
+                else
+                {
+                    result.Identity = authenticateRecord.Identity;
+                    result.Purposes = SplitPurposes(authenticateRecord.Purposes);
+                }
+            }
             return result;
         }
 
