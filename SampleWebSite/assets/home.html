@@ -9,5 +9,26 @@
 <body>
     <h1>Sample web site</h1>
     <i>Physical path = /assets/home.html</i>
+    <div>
+        <h3>Identification</h3>
+        <form method="POST">
+            <table>
+                <tr>
+                    <td>Username</td>
+                    <td><input type="text" name="username" /></td>
+                </tr>
+                <tr>
+                    <td>Password</td>
+                    <td><input type="password" name="password" /></td>
+                </tr>
+            </table>
+            <div>
+                <input type="submit" value="Register" formaction="/register">
+                <input type="submit" value="Login" formaction="/login">
+                <input type="submit" value="Logout" formaction="/logout">
+                <input type="submit" value="End session" formaction="/endSession">
+            </div>
+        </form>
+    </div>
 </body>
 </html>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Ioc.Modules;
+using Ninject;
 using OwinFramework.Interfaces.Builder;
 using OwinFramework.Interfaces.Routing;
 using OwinFramework.InterfacesV1.Facilities;
@@ -33,20 +34,22 @@ namespace SampleWebSite
             };
         }
 
-        private class PriusFactory : Prius.Contracts.Interfaces.External.IFactory
+        public class PriusFactory : Prius.Contracts.Interfaces.External.IFactory
         {
+            public static StandardKernel Ninject;
+
             public T Create<T>() where T : class
             {
-                return (T)(typeof (T).GetConstructor(Type.EmptyTypes).Invoke(null));
+                return Ninject.Get<T>();
             }
 
             public object Create(Type type)
             {
-                return (type.GetConstructor(Type.EmptyTypes).Invoke(null));
+                return Ninject.Get(type);
             }
         }
 
-        private class PriusErrorReporter: Prius.Contracts.Interfaces.External.IErrorReporter
+        public class PriusErrorReporter : Prius.Contracts.Interfaces.External.IErrorReporter
         {
             public void ReportError(Exception e, System.Data.SqlClient.SqlCommand cmd, string subject, params object[] otherInfo)
             {

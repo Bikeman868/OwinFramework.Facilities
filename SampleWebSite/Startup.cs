@@ -29,6 +29,9 @@ namespace SampleWebSite
             var packageLocator = new PackageLocator().ProbeBinFolderAssemblies();
             var ninject = new StandardKernel(new Ioc.Modules.Ninject.Module(packageLocator));
 
+            // Use this Ninject container as the Prius factory
+            Package.PriusFactory.Ninject = ninject;
+
             // Tell urchin to get its configuration from the config.json file in this project. Note that if
             // you edit this file whilst the site is running the changes will be applied without 
             // restarting the site.

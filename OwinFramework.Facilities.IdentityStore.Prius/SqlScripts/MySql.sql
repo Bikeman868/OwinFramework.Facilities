@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `tbl_authenticate`
   `when` DATETIME NOT NULL,
   `identity_id` BIGINT(20) NOT NULL,
   `purposes` VARCHAR(2048) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `remember_me_token` VARCHAR(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `remember_me_token` VARCHAR(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `authenticate_method` VARCHAR(20) COLLATE utf8mb4_unicode_ci NOT NULL,
   `method_id` BIGINT(20) NOT NULL,
   `expires` DATETIME DEFAULT NULL,
@@ -304,7 +304,7 @@ CREATE PROCEDURE `sp_AuthenticateSuccess`
 (
 	IN `identity` VARCHAR(50), 
 	IN `purposes` VARCHAR(2048),
-	IN `remember_me_token` VARCHAR(20),
+	IN `remember_me_token` VARCHAR(50),
 	IN `authenticate_method` VARCHAR(20),
 	IN `method_id` BIGINT UNSIGNED,
 	IN `expires` DATETIME
@@ -839,7 +839,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_GetAuthenticationToken`
 (
-	IN `remember_me_token` VARCHAR(20)
+	IN `remember_me_token` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
 	SELECT

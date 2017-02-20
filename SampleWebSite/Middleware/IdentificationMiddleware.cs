@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Owin;
 using OwinFramework.Builder;
@@ -10,6 +8,7 @@ using OwinFramework.Interfaces.Routing;
 using OwinFramework.InterfacesV1.Facilities;
 using OwinFramework.InterfacesV1.Middleware;
 using OwinFramework.InterfacesV1.Upstream;
+using SampleWebSite.Extensions;
 
 namespace SampleWebSite.Middleware
 {
@@ -34,11 +33,13 @@ namespace SampleWebSite.Middleware
 
         string IMiddleware.Name { get; set; }
 
-        private const string CookieName = "identification";
+        private const string IdentityCookie = "identification";
+        private const string RememberMeCookie = "remember-me";
         private const string HomePage = "/assets/home.html";
         private const string LoginPostback = "/login";
         private const string LogoutPostback = "/logout";
         private const string RegisterPostback = "/register";
+        private const string EndSessionPostback = "/endSession";
 
         public IdentificationMiddleware(
             IIdentityStore identityStore
@@ -47,73 +48,138 @@ namespace SampleWebSite.Middleware
             _identityStore = identityStore;
         }
 
-        public Task Invoke(IOwinContext context, Func<Task> next)
+        public Task RouteRequest(IOwinContext context, Func<Task> next)
         {
             var identification = new Identification();
             context.SetFeature<IIdentification>(identification);
 
-            var cookie = context.Request.Cookies[CookieName];
+            var upstream = new Upstream();
+            context.SetFeature<IUpstreamIdentification>(upstream);
+
+            var cookie = context.Request.Cookies[IdentityCookie];
             if (cookie == null)
             {
                 identification.IsAnonymous = true;
+                var rememberMe = context.Request.Cookies[RememberMeCookie];
+                if (rememberMe != null)
+                {
+                    var authenticationResult = _identityStore.RememberMe(rememberMe);
+                    {
+                        if (authenticationResult.Status == AuthenticationStatus.Authenticated)
+                        {
+                            identification.IsAnonymous = false;
+                            identification.Identity = authenticationResult.Identity;
+                            context.Response.Cookies.Append(IdentityCookie, authenticationResult.Identity);
+                        }
+                    }
+                }
             }
             else
             {
                 identification.Identity = cookie;
             }
 
-            if (string.Equals("POST", context.Request.Method, StringComparison.OrdinalIgnoreCase))
-            {
-                var path = context.Request.Path.Value;
-                if (string.Equals(LoginPostback, path, StringComparison.OrdinalIgnoreCase))
-                    return Login(context, identification);
-                if (string.Equals(LogoutPostback, path, StringComparison.OrdinalIgnoreCase))
-                    return Logout(context, identification);
-                if (string.Equals(RegisterPostback, path, StringComparison.OrdinalIgnoreCase))
-                    return Register(context, identification);
-            }
-
-            if (identification.IsAnonymous)
-            {
-                var upstream = context.GetFeature<IUpstreamIdentification>();
-                if (!upstream.AllowAnonymous)
-                {
-                    return Task.Factory.StartNew(() => context.Response.Redirect(HomePage));
-                }
-            }
-            return next();
-        }
-
-        public Task RouteRequest(IOwinContext context, Func<Task> next)
-        {
-            var upstream = new Upstream();
             if (string.Equals(HomePage, context.Request.Path.Value, StringComparison.OrdinalIgnoreCase))
                 upstream.AllowAnonymous = true;
 
-            context.SetFeature<IUpstreamIdentification>(upstream);
+            if (string.Equals("POST", context.Request.Method, StringComparison.OrdinalIgnoreCase))
+            {
+                var path = context.Request.Path.Value;
+
+                if (string.Equals(LoginPostback, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    Login(context, identification);
+                    return context.Response.WriteAsync(string.Empty);
+                }
+
+                if (string.Equals(LogoutPostback, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    Logout(context, identification);
+                    return context.Response.WriteAsync(string.Empty);
+                }
+
+                if (string.Equals(RegisterPostback, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    Register(context, identification);
+                    return context.Response.WriteAsync(string.Empty);
+                }
+
+                if (string.Equals(EndSessionPostback, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    EndSession(context, identification);
+                    return context.Response.WriteAsync(string.Empty);
+                }
+            }
 
             return next();
         }
 
-        private Task Login(IOwinContext context, Identification identification)
+        public Task Invoke(IOwinContext context, Func<Task> next)
         {
-            return Task.Factory.StartNew(() => 
-            { 
-            });
+            var identification = context.GetFeature<IIdentification>() as Identification;
+            var upstream = context.GetFeature<IUpstreamIdentification>() as Upstream;
+            if (identification == null || upstream == null)
+                throw new Exception("Something went terribly wrong");
+            
+            if (identification.IsAnonymous && !upstream.AllowAnonymous)
+                return Task.Factory.StartNew(() => context.Response.Redirect(HomePage));
+
+            return next();
         }
 
-        private Task Logout(IOwinContext context, Identification identification)
+        private void Register(IOwinContext context, Identification identification)
         {
-            return Task.Factory.StartNew(() =>
+            var form = context.Request.ReadFormAsync().Result;
+            var identity = _identityStore.CreateIdentity();
+            if (_identityStore.AddCredentials(identity, form["username"], form["password"]))
             {
-            });
+                identification.Identity = identity;
+                identification.IsAnonymous = false;
+
+                var result = _identityStore.AuthenticateWithCredentials(form["username"], form["password"]);
+                if (result.Status == AuthenticationStatus.Authenticated)
+                {
+                    context.Response.Cookies.Append(IdentityCookie, result.Identity);
+                    context.Response.Cookies.Append(RememberMeCookie, result.RememberMeToken);
+                }
+            }
+            context.Response.Redirect(HomePage);
         }
 
-        private Task Register(IOwinContext context, Identification identification)
+        private void Login(IOwinContext context, Identification identification)
         {
-            return Task.Factory.StartNew(() =>
+            var form = context.Request.ReadFormAsync().Result;
+            var result = _identityStore.AuthenticateWithCredentials(form["username"], form["password"]);
+            if (result.Status == AuthenticationStatus.Authenticated)
             {
-            });
+                identification.Identity = result.Identity;
+                identification.IsAnonymous = false;
+
+                context.Response.Cookies.Append(IdentityCookie, result.Identity);
+                context.Response.Cookies.Append(RememberMeCookie, result.RememberMeToken);
+            }
+            context.Response.Redirect(HomePage);
+        }
+
+        private void Logout(IOwinContext context, Identification identification)
+        {
+            identification.Identity = "";
+            identification.IsAnonymous = true;
+
+            context.Response.Cookies.Delete(IdentityCookie);
+            context.Response.Cookies.Delete(RememberMeCookie);
+
+            context.Response.Redirect(HomePage);
+        }
+
+        private void EndSession(IOwinContext context, Identification identification)
+        {
+            identification.Identity = "";
+            identification.IsAnonymous = true;
+
+            context.Response.Cookies.Delete(IdentityCookie);
+
+            context.Response.Redirect(HomePage);
         }
 
         private class Upstream : IUpstreamIdentification
