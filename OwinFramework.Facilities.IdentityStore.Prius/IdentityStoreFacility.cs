@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using OwinFramework.Builder;
+using OwinFramework.Facilities.IdentityStore.Prius.DataContracts;
 using OwinFramework.Facilities.IdentityStore.Prius.Exceptions;
 using OwinFramework.Facilities.IdentityStore.Prius.Records;
 using OwinFramework.Interfaces.Builder;
@@ -306,6 +307,128 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             return result;
         }
 
+        public bool ChangePassword(ICredential credential, string newPassword)
+        {
+            CheckPasswordAllowed(newPassword);
+
+            byte[] hash;
+            byte[] salt;
+            int version;
+            ComputeHash(newPassword, out version, out salt, out hash);
+
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                using (var command = _commandFactory.CreateStoredProcedure("sp_AddCredential"))
+                {
+                    command.AddParameter("who_identity", credential.Identity);
+                    command.AddParameter("reason", "Change password");
+                    command.AddParameter("userName", credential.Username);
+                    command.AddParameter("version", version);
+                    command.AddParameter("hash", hash);
+                    command.AddParameter("salt", salt);
+                    using (var reader = context.ExecuteReader(command))
+                    {
+                        return reader.Read();
+                    }
+                }
+            }
+        }
+
+        public bool DeleteCredential(ICredential credential)
+        {
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteUsernameCredentials"))
+                {
+                    command.AddParameter("who_identity", credential.Identity);
+                    command.AddParameter("reason", "Delete credential");
+                    command.AddParameter("username", credential.Username);
+                    var rowsAffected = context.ExecuteNonQuery(command);
+                    return rowsAffected > 0;
+                }
+            }
+        }
+
+        public IEnumerable<ICredential> GetCredentials(string identity)
+        {
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetIdentityCredentials"))
+                {
+                    command.AddParameter("identity", identity);
+                    using (var credentialRecords = context.ExecuteEnumerable<CredentialRecord>(command))
+                    {
+                        return credentialRecords.Select(c =>
+                            new Credential
+                            {
+                                Identity = c.Identity,
+                                Username = c.UserName,
+                                Purposes = SplitPurposes(c.Purposes).ToList()
+                            });
+                    }
+                }
+            }
+        }
+
+        public ICredential GetRememberMeCredential(string rememberMeToken)
+        {
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                AuthenticateRecord authenticateRecord;
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetAuthenticationToken"))
+                {
+                    command.AddParameter("remember_me_token", rememberMeToken);
+                    using (var rows = context.ExecuteEnumerable<AuthenticateRecord>(command))
+                    {
+                        authenticateRecord = rows.FirstOrDefault();
+                    }
+                }
+                if (authenticateRecord == null) return null;
+
+                var result = new Credential
+                {
+                    Identity = authenticateRecord.Identity,
+                    Purposes = SplitPurposes(authenticateRecord.Purposes).ToList()
+                };
+
+                if (string.Equals(authenticateRecord.AuthenticateMethod, "Credentials", StringComparison.OrdinalIgnoreCase))
+                {
+                    using (var command = _commandFactory.CreateStoredProcedure("sp_GetCredential"))
+                    {
+                        command.AddParameter("credential_id", authenticateRecord.MethodId);
+                        using (var rows = context.ExecuteEnumerable<CredentialRecord>(command))
+                        {
+                            var credentialRecord = rows.FirstOrDefault();
+                            result.Username = credentialRecord.UserName;
+                        }
+                    }
+                }
+                return result;
+            }
+        }
+
+        public ICredential GetUsernameCredential(string username)
+        {
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetUsernameCredential"))
+                {
+                    command.AddParameter("username", username);
+                    using (var rows = context.ExecuteEnumerable<CredentialRecord>(command))
+                    {
+                        var credentialRecord = rows.FirstOrDefault();
+                        if (credentialRecord == null) return null;
+                        return new Credential
+                        {
+                            Identity = credentialRecord.Identity,
+                            Username = credentialRecord.UserName,
+                            Purposes = SplitPurposes(credentialRecord.Purposes).ToList()
+                        };
+                    }
+                }
+            }
+        }
+
         private void CheckIdentityExists(IContext context, string identity)
         {
             using (var command = _commandFactory.CreateStoredProcedure("sp_GetIdentity"))
@@ -552,6 +675,5 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                 return new List<string>();
             return purposes.Split(',');
         }
-
     }
 }

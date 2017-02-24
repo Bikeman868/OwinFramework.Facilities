@@ -1,7 +1,6 @@
 set @identity='12345678';
 set @secret='abcdef';
 set @username='martin@gmail.com';
-set @identity_id=1;
 set @token='jhahjfgg';
 
 call sp_AddIdentity(@identity, 'Create account', @identity);
@@ -18,7 +17,7 @@ call sp_GetSharedSecret('invalid');
 
 call sp_GetUserNameCredential(@username);
 call sp_AuthenticateSuccess(@identity, null, @token, 'Credentials', 1, null);
-call sp_GetIdentityAuthentications(@identity_id);
+call sp_GetIdentityAuthentications(@identity);
 
 call sp_AuthenticateFail(@identity, 'Credentials', 1, @fail_count);
 select @fail_count;
@@ -31,4 +30,4 @@ call sp_GetAuthenticationToken(@token);
 call sp_DeleteIdentityCredentials(@identity, 'Change password', @identity);
 call sp_DeleteSharedSecret(@identity, 'Revoke API key', @secret);
 
-call sp_GetAudit(@identity_id);
+call sp_GetAudit(@identity);

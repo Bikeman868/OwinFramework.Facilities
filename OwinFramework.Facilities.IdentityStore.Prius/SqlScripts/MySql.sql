@@ -76,6 +76,64 @@ CREATE TABLE IF NOT EXISTS `tbl_audit`
 /********************************************************************/
 
 DELIMITER //
+CREATE PROCEDURE `sp_AddIdentity`
+(
+	IN `who_identity` VARCHAR(50),
+	IN `reason` VARCHAR(50),
+	IN `identity` VARCHAR(50)
+) DETERMINISTIC
+BEGIN
+	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
+	
+	INSERT INTO tbl_identity
+	(
+		identity
+	)VALUES(
+		identity
+	);
+	
+	SELECT LAST_INSERT_ID() INTO `identity_id`;
+	
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Add identity',
+		NULL,
+		`identity`
+	);
+
+	SELECT
+		i.identity_id,
+		i.identity
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity_id = `identity_id`;
+END//
+DELIMITER ;
+
+DELIMITER //
 CREATE PROCEDURE `sp_AddCredential`
 (
 	IN `who_identity` VARCHAR(50),
@@ -158,64 +216,6 @@ BEGIN
 		tbl_credential c
 	WHERE
 		c.`credential_id` = LAST_INSERT_ID();
-END//
-DELIMITER ;
-
-DELIMITER //
-CREATE PROCEDURE `sp_AddIdentity`
-(
-	IN `who_identity` VARCHAR(50),
-	IN `reason` VARCHAR(50),
-	IN `identity` VARCHAR(50)
-) DETERMINISTIC
-BEGIN
-	DECLARE identity_id BIGINT UNSIGNED;
-	DECLARE who_id BIGINT UNSIGNED;
-	
-	SELECT
-		i.identity_id
-	INTO
-		who_id
-	FROM
-		tbl_identity i
-	WHERE
-		i.identity = who_identity;
-	
-	INSERT INTO tbl_identity
-	(
-		identity
-	)VALUES(
-		identity
-	);
-	
-	SELECT LAST_INSERT_ID() INTO `identity_id`;
-	
-	INSERT INTO tbl_audit
-	(
-		`when`,
-		`who_id`,
-		`reason`,
-		`identity_id`,
-		`action`,
-		`original_value`,
-		`new_value`
-	) VALUES (
-		UTC_TIMESTAMP(),
-		`who_id`,
-		`reason`,
-		`identity_id`,
-		'Add identity',
-		NULL,
-		`identity`
-	);
-
-	SELECT
-		i.identity_id,
-		i.identity
-	FROM
-		tbl_identity i
-	WHERE
-		i.identity_id = `identity_id`;
 END//
 DELIMITER ;
 
@@ -383,7 +383,9 @@ BEGIN
 		WHERE
 			c.credential_id = `method_id`;
 
-		SET fail_count = fail_count + 1;
+		IF fail_count IS NULL THEN SET fail_count = 1;
+		ELSE SET fail_count = fail_count + 1;
+		END IF;
 		
 		UPDATE
 			tbl_credential c
@@ -489,6 +491,62 @@ END//
 DELIMITER ;
 
 /********************************************************************/
+
+DELIMITER //
+CREATE PROCEDURE `sp_DeleteCredential`
+(
+	IN `who_identity` VARCHAR(50),
+	IN `reason` VARCHAR(50),
+	IN `credential_id` BIGINT UNSIGNED
+) DETERMINISTIC
+BEGIN
+	DECLARE who_id BIGINT UNSIGNED;
+	DECLARE identity_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
+	
+	SELECT
+		c.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_credential c
+	WHERE
+		c.credential_id = `credential_id`;
+	
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Delete credential',
+		`credential_id`,
+		NULL
+	);
+
+	DELETE 
+	FROM 
+		c USING tbl_credential AS c
+	WHERE 
+		c.credential_id = credential_id;
+END//
+DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE `sp_DeleteIdentityCredentials`
@@ -683,6 +741,88 @@ DELIMITER ;
 /********************************************************************/
 
 DELIMITER //
+CREATE PROCEDURE `sp_UpdateCredentialPassword`
+(
+	IN `who_identity` VARCHAR(50),
+	IN `reason` VARCHAR(50),
+	IN `username` VARCHAR(80), 
+	IN `version` INT, 
+	IN `hash` VARBINARY(32), 
+	IN `salt` VARBINARY(16)
+) DETERMINISTIC
+BEGIN
+	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
+
+	SELECT
+		c.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_credential c
+	WHERE
+		c.username = username;
+
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Update credential password',
+		CONCAT(`username`, ' <old_password>'),
+		CONCAT(`username`, ' <new_password>')
+	);
+	
+	UPDATE
+		tbl_credential
+	SET
+		`version` = `version`,
+		`hash` = `hash`,
+		`salt` = `salt`
+	WHERE
+		c.username = username;
+		
+	SELECT
+		c.`credential_id`,
+		c.`identity_id`,
+		i.`identity`,
+		c.`username`,
+		c.`purposes`,
+		c.`version`,
+		c.`hash`,
+		c.`salt`,
+		c.`fail_count`,
+		c.`locked`
+	FROM
+		tbl_credential c
+			JOIN
+		tbl_identity i ON c.identity_id = i.identity_id
+	WHERE
+		c.username = username;
+END//
+DELIMITER ;
+
+/********************************************************************/
+
+DELIMITER //
 CREATE PROCEDURE `sp_GetIdentity`
 (
 	IN `identity` VARCHAR(50)
@@ -779,7 +919,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_GetAudit`
 (
-	IN `identity_id` BIGINT UNSIGNED
+	IN `identity` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
 	SELECT
@@ -799,9 +939,9 @@ BEGIN
 			LEFT JOIN
 		tbl_identity i2 ON a.identity_id = i2.identity_id
 	WHERE
-		a.who_id = `identity_id`
+		i1.identity = `identity`
 			OR
-		a.identity_id = `identity_id`
+		i2.identity = `identity`
 	ORDER BY
 		a.audit_id DESC
 	LIMIT 5000;
@@ -811,7 +951,7 @@ DELIMITER ;
 DELIMITER //
 CREATE PROCEDURE `sp_GetIdentityAuthentications`
 (
-	IN `identity_id` BIGINT UNSIGNED
+	IN `identity` VARCHAR(50)
 ) DETERMINISTIC
 BEGIN
 	SELECT
@@ -829,7 +969,7 @@ BEGIN
 			JOIN
 		tbl_identity i ON a.identity_id = i.identity_id
 	WHERE
-		a.identity_id = `identity_id`
+		i.identity = `identity`
 	ORDER BY
 		a.`when` DESC
 	LIMIT 5000;
@@ -858,6 +998,58 @@ BEGIN
 		tbl_identity i ON a.identity_id = i.identity_id
 	WHERE
 		a.remember_me_token = `remember_me_token`;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_GetCredential`
+(
+	IN `credential_id` BIGINT UNSIGNED
+) DETERMINISTIC
+BEGIN
+	SELECT
+		c.credential_id,
+		c.identity_id,
+		i.`identity`,
+		c.username,
+		c.purposes,
+		c.`version`,
+		c.`hash`,
+		c.`salt`,
+		c.fail_count,
+		c.locked
+	FROM
+		tbl_credential c
+			JOIN
+		tbl_identity i ON c.identity_id = i.identity_id
+	WHERE
+		c.credential_id = credential_id;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_GetIdentityCredentials`
+(
+	IN `identity` VARCHAR(50)
+) DETERMINISTIC
+BEGIN
+	SELECT
+		c.credential_id,
+		c.identity_id,
+		i.`identity`,
+		c.username,
+		c.purposes,
+		c.`version`,
+		c.`hash`,
+		c.`salt`,
+		c.fail_count,
+		c.locked
+	FROM
+		tbl_credential c
+			JOIN
+		tbl_identity i ON c.identity_id = i.identity_id
+	WHERE
+		i.identity = `identity`;
 END//
 DELIMITER ;
 

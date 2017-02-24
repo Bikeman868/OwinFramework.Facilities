@@ -48,8 +48,8 @@
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework, Version=2.2.10.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.2.2.10\lib\net45\OwinFramework.dll</HintPath>
+    <Reference Include="OwinFramework, Version=2.2.11.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.2.2.11\lib\net45\OwinFramework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Prius.Contracts, Version=2.0.1.20, Culture=neutral, processorArchitecture=MSIL">
@@ -73,7 +73,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AuthenticationResult.cs" />
+    <Compile Include="DataContracts\Credential.cs" />
+    <Compile Include="DataContracts\AuthenticationResult.cs" />
     <Compile Include="Configuration.cs" />
     <Compile Include="Exceptions\IdentityStoreException.cs" />
     <Compile Include="Exceptions\InvalidIdentityException.cs" />
@@ -87,7 +88,7 @@
     <Compile Include="Records\AuditRecord.cs" />
     <Compile Include="Records\IdentityRecord.cs" />
     <Compile Include="Records\SharedSecretRecord.cs" />
-    <Compile Include="SharedSecret.cs" />
+    <Compile Include="DataContracts\SharedSecret.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

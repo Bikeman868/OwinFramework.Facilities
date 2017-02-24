@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using OwinFramework.InterfacesV1.Facilities;
 
-namespace OwinFramework.Facilities.IdentityStore.Prius
+namespace OwinFramework.Facilities.IdentityStore.Prius.DataContracts
 {
     internal class AuthenticationResult : IAuthenticationResult
     {

@@ -43,6 +43,9 @@ namespace UnitTests
             mockedRepository.Add("sp_DeleteSharedSecret", new DeleteSharedSecretProcedure(tables));
             mockedRepository.Add("sp_GetIdentitySharedSecrets", new GetIdentitySharedSecretsProcedure(tables));
 
+            mockedRepository.Add("sp_AuthenticateSuccess", new AuthenticateSuccessProcedure(tables));
+            mockedRepository.Add("sp_AuthenticateFail", new AuthenticateFailProcedure(tables));
+            
             var mockContextFactory = GetMock<MockContextFactory, IContextFactory>();
             mockContextFactory.MockedRepository = mockedRepository;
 
@@ -432,6 +435,43 @@ namespace UnitTests
                 var identity = GetParameterValue(command, "identity", "");
                 SetData(_tables["secrets"], null, o => string.Equals(o["identity"].ToString(), identity, StringComparison.Ordinal));
                 return base.Query(command);
+            }
+        }
+
+        private class AuthenticateSuccessProcedure : MockedStoredProcedure
+        {
+            private readonly Dictionary<string, JArray> _tables;
+
+            public AuthenticateSuccessProcedure(Dictionary<string, JArray> tables)
+            {
+                _tables = tables;
+            }
+
+            public override long NonQuery(ICommand command)
+            {
+                return 1;
+            }
+        }
+
+        private class AuthenticateFailProcedure : MockedStoredProcedure
+        {
+            private readonly Dictionary<string, JArray> _tables;
+
+            public AuthenticateFailProcedure(Dictionary<string, JArray> tables)
+            {
+                _tables = tables;
+            }
+
+            public override long NonQuery(ICommand command)
+            {
+                var parameters = command.GetParameters();
+                if (parameters == null) return 0;
+
+                var parameter = parameters.FirstOrDefault(p => string.Equals(p.Name, "fail_count", StringComparison.InvariantCultureIgnoreCase));
+                if (parameter == null) return 0;
+
+                parameter.Value = 1;
+                return 1;
             }
         }
 
