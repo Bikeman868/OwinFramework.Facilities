@@ -16,7 +16,7 @@ namespace SampleWebSite.Middleware
     // dynamic data values. It also handles requests from the front-end to delete 
     // API tokens when the user exits from the page, and inserts this Javascript 
     // into the page.
-    public class OutputFilterMiddleware: IMiddleware<object>
+    public class OutputFilterMiddleware: IMiddleware<IResponseRewriter>
     {
         private readonly IList<IDependency> _dependencies = new List<IDependency>();
         IList<IDependency> IMiddleware.Dependencies { get { return _dependencies; } }

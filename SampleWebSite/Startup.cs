@@ -87,6 +87,13 @@ namespace SampleWebSite
                 .As("Default document")
                 .ConfigureWith(config, "/middleware/defaultDocument");
 
+            // This middleware will rewrite requests for the web site root to a request for
+            // a specific page on the site.
+            builder.Register(ninject.Get<OwinFramework.RouteVisualizer.RouteVisualizerMiddleware>())
+                .As("Route visualizer")
+                .ConfigureWith(config, "/middleware/visualizer")
+                .RunFirst();
+
             // This middleware will return 404 (not found) response always. It is configured
             // to run after all other middleware so that 404 responses will only be
             // returned if no other middleware handled the request first.
