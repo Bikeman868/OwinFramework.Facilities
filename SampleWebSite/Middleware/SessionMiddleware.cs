@@ -17,70 +17,61 @@ namespace SampleWebSite.Middleware
 
         private readonly IDictionary<string, Session> _sessions;
 
+        private const string SessionCookie = "sid";
+
         public InProcessSession()
         {
             _sessions = new Dictionary<string, Session>();
             Dependencies = new List<IDependency>();
-            this.RunAfter<IIdentification>(null, false);
         }
 
         public Task RouteRequest(IOwinContext context, Func<Task> next)
         {
-            context.SetFeature<IUpstreamSession>(new Session());
+            var sessionId = context.Request.Cookies[SessionCookie];
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                sessionId = Guid.NewGuid().ToShortString();
+                context.Response.Cookies.Append(
+                    SessionCookie, 
+                    sessionId,
+                    new CookieOptions { Expires = DateTime.UtcNow.AddMinutes(15) });
+            }
+
+            Session session;
+            lock (_sessions)
+            {
+                if (!_sessions.TryGetValue(sessionId, out session))
+                {
+                    session = new Session(sessionId);
+                    _sessions.Add(sessionId, session);
+                }
+            }
+            
+            context.SetFeature<IUpstreamSession>(session);
+            context.SetFeature<ISession>(session);
             return next();
         }
 
         public Task Invoke(IOwinContext context, Func<Task> next)
         {
-            var session = context.GetFeature<IUpstreamSession>() as Session;
-
-            if (session != null && session.SessionRequired)
-            {
-                var identification = context.GetFeature<IIdentification>();
-                if (identification != null && !identification.IsAnonymous)
-                {
-                    lock (_sessions)
-                    {
-                        Session existingSession;
-                        if (_sessions.TryGetValue(identification.Identity, out existingSession))
-                        {
-                            session = existingSession;
-                        }
-                        else
-                        {
-                            session.EstablishSession(identification.Identity);
-                            _sessions.Add(identification.Identity, session);
-                        }
-                    }
-                }
-            }
-
-            if (session == null)
-                session = new Session();
-
-            context.SetFeature<ISession>(session);
-
             return next();
         }
 
         private class Session : ISession, IUpstreamSession
         {
-            private IDictionary<string, object> _sessionVariables;
+            private readonly IDictionary<string, object> _sessionVariables;
 
             public bool HasSession { get { return _sessionVariables != null; } }
-            public bool SessionRequired;
             public string SessionId { get; private set; }
 
-            public Session()
+            public Session(string sessionId)
             {
+                SessionId = sessionId;
+                _sessionVariables = new ConcurrentDictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             }
 
             public bool EstablishSession(string sessionId)
             {
-                SessionId = sessionId;
-                SessionRequired = true;
-                if (!HasSession)
-                    _sessionVariables = new ConcurrentDictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                 return true;
             }
 

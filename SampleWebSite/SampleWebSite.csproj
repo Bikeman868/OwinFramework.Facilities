@@ -121,7 +121,7 @@
   <ItemGroup>
     <Compile Include="Extensions\OwinRequestExtensions.cs" />
     <Compile Include="Middleware\ApiMiddleware.cs" />
-    <Compile Include="Middleware\ApiTokenMiddleware.cs" />
+    <Compile Include="Middleware\OutputFilterMiddleware.cs" />
     <Compile Include="Middleware\ApiSecurityMiddleware.cs" />
     <Compile Include="Middleware\AuthorizationMiddleware.cs" />
     <Compile Include="Middleware\IdentificationMiddleware.cs" />

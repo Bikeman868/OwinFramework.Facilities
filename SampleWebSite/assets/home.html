@@ -11,8 +11,21 @@
     <i>Physical path = /assets/home.html</i>
     <div>
         <h3>Identification</h3>
+
         <form method="POST">
             <table>
+                <tr>
+                    <td>Identity</td>
+                    <td>{{identity}}</td>
+                </tr>
+                <tr>
+                    <td>Username</td>
+                    <td>{{username}}</td>
+                </tr>
+                <tr>
+                    <td>Purposes</td>
+                    <td>{{purposes}}</td>
+                </tr>
                 <tr>
                     <td>Username</td>
                     <td><input type="text" name="username" /></td>
@@ -21,13 +34,27 @@
                     <td>Password</td>
                     <td><input type="password" name="password" /></td>
                 </tr>
+                <tr>
+                    <td>New password</td>
+                    <td><input type="password" name="newPassword" /></td>
+                </tr>
+                <tr>
+                    <td>Reset token</td>
+                    <td><input type="text" name="resetToken" /></td>
+                </tr>
             </table>
             <div>
                 <input type="submit" value="Register" formaction="/register">
                 <input type="submit" value="Login" formaction="/login">
                 <input type="submit" value="Logout" formaction="/logout">
+                <br />
                 <input type="submit" value="End session" formaction="/endSession">
+                <input type="submit" value="Change password" formaction="/changePassword">
+                <br />
+                <input type="submit" value="Request password reset" formaction="/requestPasswordReset">
+                <input type="submit" value="Reset password" formaction="/resetPassword">
             </div>
+            <div>{{outcome}}</div>
         </form>
     </div>
 </body>

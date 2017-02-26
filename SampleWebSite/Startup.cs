@@ -60,13 +60,18 @@ namespace SampleWebSite
             var config = ninject.Get<IConfiguration>();
 
             // Define separate routes for the types of request that have different OWIN pipelines
+            var apiPath = new PathString("/api");
+            var assetsPath = new PathString("/assets");
+            var assetsConfigPath = new PathString("/config/assets");
             builder.Register(ninject.Get<IRouter>())
-                .AddRoute("api", c => c.Request.Path.StartsWithSegments(new PathString("/api")))
+                .AddRoute("api", c => c.Request.Path.StartsWithSegments(apiPath))
                 .AddRoute("assets", c => 
-                    c.Request.Path.StartsWithSegments(new PathString("/assets")) ||
-                    c.Request.Path.StartsWithSegments(new PathString("/config/assets")))
+                    c.Request.Path.StartsWithSegments(assetsPath) ||
+                    c.Request.Path.StartsWithSegments(assetsConfigPath))
                 .AddRoute("pages", c => true)
                 .As("Security policy");
+
+            #region Site wide middleware
 
             // This middleware will wrap the OWIN pipeline in a try/catch and return details of the
             // exception if the request was from the local machine. Also catches HttpException and
@@ -82,6 +87,19 @@ namespace SampleWebSite
                 .As("Default document")
                 .ConfigureWith(config, "/middleware/defaultDocument");
 
+            // This middleware will return 404 (not found) response always. It is configured
+            // to run after all other middleware so that 404 responses will only be
+            // returned if no other middleware handled the request first.
+            builder.Register(ninject.Get<OwinFramework.NotFound.NotFoundMiddleware>())
+                .As("Not found")
+                .RunOnRoute("pages")
+                .RunOnRoute("assets")
+                .RunLast();
+
+            #endregion
+
+            #region Non-secure static file assets
+
             // This middleware will map the path of http requests onto the file system path and
             // return the contents of the files in response to the request. This instance runs
             // on the 'assets' route which does not identify the caller, does not establish a 
@@ -92,24 +110,9 @@ namespace SampleWebSite
                 .ConfigureWith(config, "/middleware/staticFiles/assets")
                 .RunOnRoute("assets");
 
-            // This is another instance of the static files middleware, but this one serves
-            // pages on the 'pages' route which contains additional middleware to identify
-            // the user. Tells the Authorization middleware that the caller must have the 
-            // 'user' permission to retrieve these files.
-            builder.Register(ninject.Get<OwinFramework.StaticFiles.StaticFilesMiddleware>())
-                .As("Protected resources")
-                .ConfigureWith(config, "/middleware/staticFiles/pages")
-                .RunOnRoute("pages")
-                .RunAfter("API token");
+            #endregion
 
-            // This middleware will return 404 (not found) response always. It is configured
-            // to run after all other middleware so that 404 responses will only be
-            // returned if no other middleware handled the request first.
-            builder.Register(ninject.Get<OwinFramework.NotFound.NotFoundMiddleware>())
-                .As("Not found")
-                .RunOnRoute("pages")
-                .RunOnRoute("assets")
-                .RunLast();
+            #region REST API secured with token
 
             // This middleware is part of this sample application. It provides a very simple API
             // that can add 2 numbers together. The API is trivial because we are trying to
@@ -126,21 +129,34 @@ namespace SampleWebSite
                 .As("Api security")
                 .RunOnRoute("api");
 
+            #endregion
+
+            #region Secure static file assets
+
+            // This is another instance of the static files middleware, but this one serves
+            // pages on the 'pages' route which contains additional middleware to identify
+            // the user. Tells the Authorization middleware that the caller must have the 
+            // 'user' permission to retrieve these files.
+            builder.Register(ninject.Get<OwinFramework.StaticFiles.StaticFilesMiddleware>())
+                .As("Protected resources")
+                .ConfigureWith(config, "/middleware/staticFiles/pages")
+                .RunOnRoute("pages")
+                .RunAfter<IAuthorization>(null, false);
+
             // This middleware is part of this sample application. It buffers HTML pages and replaces
-            // {{apiToken}} in the HML with an actual api token. This provides a token to
-            // Javascript so that it can call the API.
-            builder.Register(ninject.Get<Middleware.ApiTokenMiddleware>())
-                .As("Api token")
-                .RunAfter<IAuthorization>(null, false)
+            // {{xxxx}} markers in the HML with data.
+            builder.Register(ninject.Get<Middleware.OutputFilterMiddleware>())
+                .As("Output filter")
                 .RunOnRoute("pages");
 
             // This middleware is IIdentification middleware. It identifies the user from
             // a cookie and provides postback endoints to login, logout and create an account.
-            // Note that this middleware is not designed to be secure, it is designed to be
-            // simple and easy to understand.
+            // Note that this middleware is not designed to be secure, it is designed to 
+            // test the identification store facility.
             builder.Register(ninject.Get<Middleware.IdentificationMiddleware>())
                 .As("Identification")
-                .RunOnRoute("pages");
+                .RunOnRoute("pages")
+                .RunAfter("Output filter");
 
             // This middleware is IAuthorization middleware. It gives all users the
             // 'user' permission and all anonymous visitors no permissions.
@@ -153,6 +169,8 @@ namespace SampleWebSite
             builder.Register(ninject.Get<Middleware.InProcessSession>())
                 .As("Session")
                 .RunOnRoute("pages");
+
+            #endregion
 
             app.UseBuilder(builder);
         }

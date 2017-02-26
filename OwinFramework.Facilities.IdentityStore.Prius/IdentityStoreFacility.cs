@@ -249,7 +249,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                             command.AddParameter("method_id", credential.CredentialId);
                             var failCountParam = command.AddParameter("fail_count",SqlDbType.Int);
                             context.ExecuteNonQuery(command);
-                            failCount = (int)failCountParam.Value;
+                            failCount = (int)Convert.ChangeType(failCountParam.Value, typeof(int));
                         }
                         if (failCount >= _configuration.FailedLoginsToLock)
                         {

@@ -16,7 +16,7 @@
 
             var xhttp = new XMLHttpRequest();
             xhttp.open("GET", "/api/add?a=" + value1 + "&b=" + value2, false);
-            xhttp.setRequestHeader("Api-token", apiToken);
+            xhttp.setRequestHeader("api-token", apiToken);
             xhttp.send();
 
             if (xhttp.status == 200) {

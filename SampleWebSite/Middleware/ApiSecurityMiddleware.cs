@@ -33,7 +33,7 @@ namespace SampleWebSite.Middleware
         {
             var request = context.Request;
 
-            var accessToken = request.Headers["Api-token"];
+            var accessToken = request.Headers["api-token"];
             if (string.IsNullOrEmpty(accessToken))
                 throw new HttpException((int)HttpStatusCode.Forbidden, "No API token found in the request");
 

@@ -35,17 +35,20 @@ namespace SampleWebSite.Middleware
 
         private const string IdentityCookie = "identification";
         private const string RememberMeCookie = "remember-me";
-        private const string HomePage = "/assets/home.html";
+        private const string HomePage = "/home.html";
         private const string LoginPostback = "/login";
         private const string LogoutPostback = "/logout";
         private const string RegisterPostback = "/register";
         private const string EndSessionPostback = "/endSession";
+        private const string ChangePasswordPostback = "/changePassword";
+        private const string RequestPasswordResetPostback = "/requestPasswordReset";
+        private const string ResetPasswordPostback = "/resetPassword";
 
         public IdentificationMiddleware(
-            IIdentityStore identityStore
-            )
+            IIdentityStore identityStore)
         {
             _identityStore = identityStore;
+            this.RunAfter<ISession>();
         }
 
         public Task RouteRequest(IOwinContext context, Func<Task> next)
@@ -64,14 +67,13 @@ namespace SampleWebSite.Middleware
                 if (rememberMe != null)
                 {
                     var authenticationResult = _identityStore.RememberMe(rememberMe);
+                    if (authenticationResult.Status == AuthenticationStatus.Authenticated)
                     {
-                        if (authenticationResult.Status == AuthenticationStatus.Authenticated)
-                        {
-                            identification.IsAnonymous = false;
-                            identification.Identity = authenticationResult.Identity;
-                            context.Response.Cookies.Append(IdentityCookie, authenticationResult.Identity);
-                        }
+                        identification.IsAnonymous = false;
+                        identification.Identity = authenticationResult.Identity;
+                        context.Response.Cookies.Append(IdentityCookie, authenticationResult.Identity);
                     }
+                    SetAuthentication(context, authenticationResult);
                 }
             }
             else
@@ -107,6 +109,24 @@ namespace SampleWebSite.Middleware
                 if (string.Equals(EndSessionPostback, path, StringComparison.OrdinalIgnoreCase))
                 {
                     EndSession(context, identification);
+                    return context.Response.WriteAsync(string.Empty);
+                }
+
+                if (string.Equals(ChangePasswordPostback, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    ChangePassword(context, identification);
+                    return context.Response.WriteAsync(string.Empty);
+                }
+
+                if (string.Equals(RequestPasswordResetPostback, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    SendPasswordReset(context, identification);
+                    return context.Response.WriteAsync(string.Empty);
+                }
+
+                if (string.Equals(ResetPasswordPostback, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    ResetPassword(context, identification);
                     return context.Response.WriteAsync(string.Empty);
                 }
             }
@@ -158,6 +178,7 @@ namespace SampleWebSite.Middleware
                 context.Response.Cookies.Append(IdentityCookie, result.Identity);
                 context.Response.Cookies.Append(RememberMeCookie, result.RememberMeToken);
             }
+            SetAuthentication(context, result);
             context.Response.Redirect(HomePage);
         }
 
@@ -169,6 +190,7 @@ namespace SampleWebSite.Middleware
             context.Response.Cookies.Delete(IdentityCookie);
             context.Response.Cookies.Delete(RememberMeCookie);
 
+            SetOutcome(context, identification, "Logged out");
             context.Response.Redirect(HomePage);
         }
 
@@ -179,7 +201,49 @@ namespace SampleWebSite.Middleware
 
             context.Response.Cookies.Delete(IdentityCookie);
 
+            SetOutcome(context, identification, "Session cookie deleted");
             context.Response.Redirect(HomePage);
+        }
+
+        private void ChangePassword(IOwinContext context, Identification identification)
+        {
+
+        }
+
+        private void SendPasswordReset(IOwinContext context, Identification identification)
+        {
+
+        }
+
+        private void ResetPassword(IOwinContext context, Identification identification)
+        {
+
+        }
+
+        private void SetOutcome(IOwinContext context, Identification identification, string outcome)
+        {
+            var session = context.GetFeature<ISession>();
+            if (session == null) return;
+
+            session.Set("identity", identification.IsAnonymous ? "Anonymous" : identification.Identity);
+            session.Set("outcome", outcome);
+        }
+
+        private void SetAuthentication(IOwinContext context, IAuthenticationResult authenticationResult)
+        {
+            var session = context.GetFeature<ISession>();
+            if (session == null) return;
+
+            session.Set("identity", authenticationResult.Identity);
+            session.Set("outcome", authenticationResult.Status.ToString());
+            session.Set("purposes", string.Join(", ", authenticationResult.Purposes));
+
+            if (!string.IsNullOrEmpty(authenticationResult.RememberMeToken))
+            {
+                var credential = _identityStore.GetRememberMeCredential(authenticationResult.RememberMeToken);
+                session.Set("purposes", string.Join(", ", credential.Purposes));
+                session.Set("username", credential.Username);
+            }
         }
 
         private class Upstream : IUpstreamIdentification
