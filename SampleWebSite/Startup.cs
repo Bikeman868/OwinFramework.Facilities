@@ -63,6 +63,7 @@ namespace SampleWebSite
             var apiPath = new PathString("/api");
             var assetsPath = new PathString("/assets");
             var assetsConfigPath = new PathString("/config/assets");
+
             builder.Register(ninject.Get<IRouter>())
                 .AddRoute("api", c => c.Request.Path.StartsWithSegments(apiPath))
                 .AddRoute("assets", c => 
@@ -94,6 +95,10 @@ namespace SampleWebSite
                 .ConfigureWith(config, "/middleware/visualizer")
                 .RunFirst();
 
+            #endregion
+
+            #region Middleware common to secure and non-secure assets
+
             // This middleware will return 404 (not found) response always. It is configured
             // to run after all other middleware so that 404 responses will only be
             // returned if no other middleware handled the request first.
@@ -102,6 +107,13 @@ namespace SampleWebSite
                 .RunOnRoute("pages")
                 .RunOnRoute("assets")
                 .RunLast();
+
+            // This middleware is part of this sample application. It buffers HTML pages and replaces
+            // {{xxxx}} markers in the HML with data.
+            builder.Register(ninject.Get<Middleware.OutputFilterMiddleware>())
+                .As("Output filter")
+                .RunOnRoute("assets")
+                .RunOnRoute("pages");
 
             #endregion
 
@@ -150,12 +162,6 @@ namespace SampleWebSite
                 .RunOnRoute("pages")
                 .RunAfter<IAuthorization>(null, false);
 
-            // This middleware is part of this sample application. It buffers HTML pages and replaces
-            // {{xxxx}} markers in the HML with data.
-            builder.Register(ninject.Get<Middleware.OutputFilterMiddleware>())
-                .As("Output filter")
-                .RunOnRoute("pages");
-
             // This middleware is IIdentification middleware. It identifies the user from
             // a cookie and provides postback endoints to login, logout and create an account.
             // Note that this middleware is not designed to be secure, it is designed to 
@@ -165,14 +171,15 @@ namespace SampleWebSite
                 .RunOnRoute("pages")
                 .RunAfter("Output filter");
 
-            // This middleware is IAuthorization middleware. It gives all users the
-            // 'user' permission and all anonymous visitors no permissions.
+            // This middleware is IAuthorization middleware. It gives all logged in users 
+            // the 'user' permission and all anonymous visitors no permissions.
             builder.Register(ninject.Get<Middleware.AuthorizationMiddleware>())
                 .As("Authorization")
                 .RunOnRoute("pages");
 
-            // This middleware is ISession middleware. It maintains a dictionary per
-            // identity that the application can use to persist state between requests
+            // This middleware is ISession middleware. It stores a cookie on the browser
+            // and uses it to select a dictionary specific to that browser instance. The
+            // application can use session to store information between requests.
             builder.Register(ninject.Get<Middleware.InProcessSession>())
                 .As("Session")
                 .RunOnRoute("pages");

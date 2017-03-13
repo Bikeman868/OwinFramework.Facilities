@@ -318,7 +318,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
-                using (var command = _commandFactory.CreateStoredProcedure("sp_AddCredential"))
+                using (var command = _commandFactory.CreateStoredProcedure("sp_UpdateCredentialPassword"))
                 {
                     command.AddParameter("who_identity", credential.Identity);
                     command.AddParameter("reason", "Change password");

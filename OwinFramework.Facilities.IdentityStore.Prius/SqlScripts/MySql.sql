@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS `tbl_audit`
   `who_id` BIGINT(20) DEFAULT NULL,
   `reason` VARCHAR(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `identity_id` BIGINT(20) NOT NULL,
-  `action` VARCHAR(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action` VARCHAR(30) COLLATE utf8mb4_unicode_ci NOT NULL,
   `original_value` VARCHAR(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `new_value` VARCHAR(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`audit_id`),
@@ -792,11 +792,11 @@ BEGIN
 	);
 	
 	UPDATE
-		tbl_credential
+		tbl_credential c
 	SET
-		`version` = `version`,
-		`hash` = `hash`,
-		`salt` = `salt`
+		c.`version` = `version`,
+		c.`hash` = `hash`,
+		c.`salt` = `salt`
 	WHERE
 		c.username = username;
 		

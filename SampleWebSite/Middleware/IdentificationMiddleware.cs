@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Owin;
 using OwinFramework.Builder;
+using OwinFramework.Facilities.IdentityStore.Prius.Exceptions;
 using OwinFramework.Interfaces.Builder;
 using OwinFramework.Interfaces.Routing;
 using OwinFramework.InterfacesV1.Facilities;
@@ -207,7 +208,35 @@ namespace SampleWebSite.Middleware
 
         private void ChangePassword(IOwinContext context, Identification identification)
         {
-
+            var form = context.Request.ReadFormAsync().Result;
+            var result = _identityStore.AuthenticateWithCredentials(form["username"], form["password"]);
+            if (result.Status == AuthenticationStatus.Authenticated)
+            {
+                var credential = _identityStore.GetRememberMeCredential(result.RememberMeToken);
+                if (credential == null)
+                {
+                    SetOutcome(context, identification, "Internal error, remember me token was not valid");
+                }
+                else
+                {
+                    try
+                    {
+                        if (_identityStore.ChangePassword(credential, form["newPassword"]))
+                            SetOutcome(context, identification, "Password changed");
+                        else
+                            SetOutcome(context, identification, "Password was not changed");
+                    }
+                    catch (InvalidPasswordException e)
+                    {
+                        SetOutcome(context, identification, "Invalid password. " + e.Message);
+                    }
+                }
+            }
+            else
+            {
+                SetOutcome(context, identification, "Login failed");
+            }
+            context.Response.Redirect(HomePage);
         }
 
         private void SendPasswordReset(IOwinContext context, Identification identification)
