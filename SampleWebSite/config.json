@@ -49,24 +49,49 @@
             "path": "/pipeline"
         }
     },
-    "prius": { 
-        "databases":[
-            {
-                "name":"Identity", 
-                "type":"MySql", 
-                "connectionString":"Server=localhost;Database=identity;Uid=test;Pwd=;"
+    "owinFramework": {
+        "facility": {
+            "identityStore.Prius": {
+                "priusRepositoryName": "IdentityStore",
+                "identityUrnNamespace": "mydomain.id",
+                "mixedCaseTokens":  true,
+                "mixedCaseIdentity":  false,
+                "mixedCaseSharedSecret": true,
+                "minimumUserNameLength": 5,
+                "maximumUserNameLength": 50,
+                "userNameRegex": "^[a-zA-Z0-9@_.-]*$",
+                "minimumPasswordLength": 8,
+                "maximumPasswordLength": 160,
+                "passwordRegex": ".*",
+                "failedLoginsToLock": 5,
+                "lockDuration": "04:00:00",
+                "rememberMeFor": 90
+            },
+            "tokenStore.Cache": {
+                "lifetime": "01:00:00",
+                "cachePrefix": "/tokens/"
             }
-        ],
-        "fallbackPolicies":[
-            {"name":"none", "allowedFailurePercent":100}
-        ],
-        "repositories":[
-            {
-                "name":"IdentityStore",
-                "clusters":[
-                    {"sequence":1, "databases":["Identity"], "fallbackPolicy":"none"}
-                ]
-            }
-        ]
+        }
+    },
+    "prius"
+        : {
+            "databases": [
+                {
+                    "name": "Identity",
+                    "type": "MySql",
+                    "connectionString": "Server=localhost;Database=identity;Uid=test;Pwd=;"
+                }
+            ],
+            "fallbackPolicies": [
+                { "name": "none", "allowedFailurePercent": 100 }
+            ],
+            "repositories": [
+                {
+                    "name": "IdentityStore",
+                    "clusters": [
+                        { "sequence": 1, "databases": [ "Identity" ], "fallbackPolicy": "none" }
+                    ]
+                }
+            ]
+        }
     }
-}

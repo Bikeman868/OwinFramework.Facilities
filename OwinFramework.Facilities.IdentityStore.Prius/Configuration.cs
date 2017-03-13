@@ -8,6 +8,10 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
         public string PriusRepositoryName { get; set; }
         public string IdentityUrnNamespace { get; set; }
 
+        public bool MixedCaseTokens { get; set; }
+        public bool MixedCaseIdentity { get; set; }
+        public bool MixedCaseSharedSecret { get; set; }
+
         public int MinimumUserNameLength { get; set; }
         public int MaximumUserNameLength { get; set; }
         public string UserNameRegex { get; set; }
@@ -24,6 +28,10 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
         {
             PriusRepositoryName = "IdentityStore";
             IdentityUrnNamespace = "identity";
+
+            MixedCaseTokens = false;
+            MixedCaseIdentity = false;
+            MixedCaseSharedSecret = true;
 
             MinimumUserNameLength = 3;
             MaximumUserNameLength = 80;

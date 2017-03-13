@@ -115,6 +115,14 @@ namespace SampleWebSite
                 .RunOnRoute("assets")
                 .RunOnRoute("pages");
 
+            // This middleware is ISession middleware. It stores a cookie on the browser
+            // and uses it to select a dictionary specific to that browser instance. The
+            // application can use session to store information between requests.
+            builder.Register(ninject.Get<Middleware.InProcessSession>())
+                .As("Session")
+                .RunOnRoute("assets")
+                .RunOnRoute("pages");
+
             #endregion
 
             #region Non-secure static file assets
@@ -175,13 +183,6 @@ namespace SampleWebSite
             // the 'user' permission and all anonymous visitors no permissions.
             builder.Register(ninject.Get<Middleware.AuthorizationMiddleware>())
                 .As("Authorization")
-                .RunOnRoute("pages");
-
-            // This middleware is ISession middleware. It stores a cookie on the browser
-            // and uses it to select a dictionary specific to that browser instance. The
-            // application can use session to store information between requests.
-            builder.Register(ninject.Get<Middleware.InProcessSession>())
-                .As("Session")
                 .RunOnRoute("pages");
 
             #endregion

@@ -28,6 +28,7 @@ namespace SampleWebSite.Middleware
     public class IdentificationMiddleware: IMiddleware<IIdentification>, IRoutingProcessor
     {
         private readonly IIdentityStore _identityStore;
+        private readonly ITokenStore _tokenStore;
 
         private readonly IList<IDependency> _dependencies = new List<IDependency>();
         IList<IDependency> IMiddleware.Dependencies { get { return _dependencies; } }
@@ -36,7 +37,8 @@ namespace SampleWebSite.Middleware
 
         private const string IdentityCookie = "identification";
         private const string RememberMeCookie = "remember-me";
-        private const string HomePage = "/home.html";
+        private const string SecureHomePage = "/home.html";
+        private const string PublicHomePage = "/assets/home.html";
         private const string LoginPostback = "/login";
         private const string LogoutPostback = "/logout";
         private const string RegisterPostback = "/register";
@@ -46,10 +48,13 @@ namespace SampleWebSite.Middleware
         private const string ResetPasswordPostback = "/resetPassword";
 
         public IdentificationMiddleware(
-            IIdentityStore identityStore)
+            IIdentityStore identityStore, 
+            ITokenStore tokenStore)
         {
             _identityStore = identityStore;
-            this.RunAfter<ISession>();
+            _tokenStore = tokenStore;
+
+            this.RunAfter<ISession>(null, false);
         }
 
         public Task RouteRequest(IOwinContext context, Func<Task> next)
@@ -82,7 +87,7 @@ namespace SampleWebSite.Middleware
                 identification.Identity = cookie;
             }
 
-            if (string.Equals(HomePage, context.Request.Path.Value, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(SecureHomePage, context.Request.Path.Value, StringComparison.OrdinalIgnoreCase))
                 upstream.AllowAnonymous = true;
 
             if (string.Equals("POST", context.Request.Method, StringComparison.OrdinalIgnoreCase))
@@ -143,7 +148,7 @@ namespace SampleWebSite.Middleware
                 throw new Exception("Something went terribly wrong");
             
             if (identification.IsAnonymous && !upstream.AllowAnonymous)
-                return Task.Factory.StartNew(() => context.Response.Redirect(HomePage));
+                return Task.Factory.StartNew(() => context.Response.Redirect(SecureHomePage));
 
             return next();
         }
@@ -152,19 +157,27 @@ namespace SampleWebSite.Middleware
         {
             var form = context.Request.ReadFormAsync().Result;
             var identity = _identityStore.CreateIdentity();
-            if (_identityStore.AddCredentials(identity, form["username"], form["password"]))
+            try
             {
-                identification.Identity = identity;
-                identification.IsAnonymous = false;
-
-                var result = _identityStore.AuthenticateWithCredentials(form["username"], form["password"]);
-                if (result.Status == AuthenticationStatus.Authenticated)
+                if (_identityStore.AddCredentials(identity, form["username"], form["password"]))
                 {
-                    context.Response.Cookies.Append(IdentityCookie, result.Identity);
-                    context.Response.Cookies.Append(RememberMeCookie, result.RememberMeToken);
+                    identification.Identity = identity;
+                    identification.IsAnonymous = false;
+
+                    var result = _identityStore.AuthenticateWithCredentials(form["username"], form["password"]);
+                    if (result.Status == AuthenticationStatus.Authenticated)
+                    {
+                        context.Response.Cookies.Append(IdentityCookie, result.Identity);
+                        context.Response.Cookies.Append(RememberMeCookie, result.RememberMeToken);
+                        SetAuthentication(context, result);
+                    }
                 }
             }
-            context.Response.Redirect(HomePage);
+            catch (Exception e)
+            {
+                SetOutcome(context, identification, e.Message);
+            }
+            GoHome(context, identification);
         }
 
         private void Login(IOwinContext context, Identification identification)
@@ -180,7 +193,7 @@ namespace SampleWebSite.Middleware
                 context.Response.Cookies.Append(RememberMeCookie, result.RememberMeToken);
             }
             SetAuthentication(context, result);
-            context.Response.Redirect(HomePage);
+            GoHome(context, identification);
         }
 
         private void Logout(IOwinContext context, Identification identification)
@@ -192,7 +205,7 @@ namespace SampleWebSite.Middleware
             context.Response.Cookies.Delete(RememberMeCookie);
 
             SetOutcome(context, identification, "Logged out");
-            context.Response.Redirect(HomePage);
+            GoHome(context, identification);
         }
 
         private void EndSession(IOwinContext context, Identification identification)
@@ -203,7 +216,7 @@ namespace SampleWebSite.Middleware
             context.Response.Cookies.Delete(IdentityCookie);
 
             SetOutcome(context, identification, "Session cookie deleted");
-            context.Response.Redirect(HomePage);
+            GoHome(context, identification);
         }
 
         private void ChangePassword(IOwinContext context, Identification identification)
@@ -236,17 +249,99 @@ namespace SampleWebSite.Middleware
             {
                 SetOutcome(context, identification, "Login failed");
             }
-            context.Response.Redirect(HomePage);
+            GoHome(context, identification);
         }
 
         private void SendPasswordReset(IOwinContext context, Identification identification)
         {
+            var form = context.Request.ReadFormAsync().Result;
+            var userName = form["username"];
+            if (userName == null)
+            {
+                SetOutcome(context, identification, "No user name provided");
+            }
+            else
+            {
+                var token = _tokenStore.CreateToken("passwordReset", new[] { "ResetPassword" }, userName);
 
+                var session = context.GetFeature<ISession>();
+                if (session != null)
+                    session.Set("reset-token", token);
+
+                SetOutcome(context, identification, "Password reset token is: " + token);
+            }
+            GoHome(context, identification);
         }
 
         private void ResetPassword(IOwinContext context, Identification identification)
         {
+            var form = context.Request.ReadFormAsync().Result;
+            var userName = form["username"];
+            var resetToken = form["reset-token"];
+            var newPassword = form["new-password"];
 
+            var failed = false;
+            if (resetToken == null)
+            {
+                SetOutcome(context, identification, "No password reset token provided");
+                failed = true;
+            }
+            else if (userName == null)
+            {
+                SetOutcome(context, identification, "No username provided");
+                failed = true;
+            }
+            else if (newPassword == null)
+            {
+                SetOutcome(context, identification, "No new password provided");
+                failed = true;
+            }
+
+            ICredential credential = null;
+            if (!failed)
+            {
+                credential = _identityStore.GetUsernameCredential(userName);
+                if (credential == null)
+                {
+                    SetOutcome(context, identification, "Invalid username provided");
+                    failed = true;
+                }
+            }
+
+            if (!failed)
+            {
+                var token = _tokenStore.GetToken("passwordReset", resetToken, "ResetPassword", userName);
+                if (token.Status == TokenStatus.Allowed)
+                {
+                    try
+                    {
+                        if (_identityStore.ChangePassword(credential, form["new-password"]))
+                        {
+                            SetOutcome(context, identification, "Password succesfully reset");
+                            identification.Identity = credential.Identity;
+                            identification.IsAnonymous = false;
+
+                            context.Response.Cookies.Append(IdentityCookie, credential.Identity);
+                            context.Response.Cookies.Delete(RememberMeCookie);
+                            context.Response.Redirect(SecureHomePage);
+                        }
+                        else
+                            SetOutcome(context, identification, "Password reset failed");
+                    }
+                    catch (InvalidPasswordException e)
+                    {
+                        SetOutcome(context, identification, 
+                            "Invalid password. " + e.Message
+                            + ". You will need to get a new password reset token to try again.");
+                    }
+                }
+                else
+                {
+                    SetOutcome(context, identification, "This password reset token has been used before");
+                }
+            }
+
+            GoHome(context, identification);
         }
 
         private void SetOutcome(IOwinContext context, Identification identification, string outcome)
@@ -265,14 +360,22 @@ namespace SampleWebSite.Middleware
 
             session.Set("identity", authenticationResult.Identity);
             session.Set("outcome", authenticationResult.Status.ToString());
-            session.Set("purposes", string.Join(", ", authenticationResult.Purposes));
+            session.Set("purposes", string.Join(", ", authenticationResult.Purposes ?? new List<string>()));
 
             if (!string.IsNullOrEmpty(authenticationResult.RememberMeToken))
             {
                 var credential = _identityStore.GetRememberMeCredential(authenticationResult.RememberMeToken);
-                session.Set("purposes", string.Join(", ", credential.Purposes));
+                session.Set("purposes", string.Join(", ", credential.Purposes ?? new List<string>()));
                 session.Set("username", credential.Username);
             }
+        }
+
+        private void GoHome(IOwinContext context, Identification identification)
+        {
+            if (identification.IsAnonymous)
+                context.Response.Redirect(PublicHomePage);
+            else
+                context.Response.Redirect(SecureHomePage);
         }
 
         private class Upstream : IUpstreamIdentification

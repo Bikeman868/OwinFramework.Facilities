@@ -12,7 +12,7 @@
             var value1 = document.getElementById("value1").value;
             var value2 = document.getElementById("value2").value;
 
-            var apiToken = document.getElementById("apiToken").value;
+            var apiToken = document.getElementById("api-token").value;
 
             var xhttp = new XMLHttpRequest();
             xhttp.open("GET", "/api/add?a=" + value1 + "&b=" + value2, false);
@@ -31,10 +31,10 @@
     </script>
     
     <!--Making this a hidden input will include it with any postbacks-->
-    <input type="hidden" id="apiToken" value="{{apiToken}}"/>
+    <input type="hidden" id="api-token" value="{{api-token}}"/>
 
     <h1>Calculator</h1>
-    <p>Adds two numbers together and shows the reault</p>
+    <p>Adds two numbers together and shows the result</p>
     <div>
         <input type="number" id="value1" value="51"/>
         &nbsp<span class="operation">+</span>&nbsp;

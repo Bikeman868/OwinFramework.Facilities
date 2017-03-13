@@ -91,7 +91,7 @@ namespace SampleWebSite.Middleware
                     var html = encoding.GetString(originalBytes);
 
                     var apiToken = string.Empty;
-                    if (html.Contains("{{apiToken}}"))
+                    if (html.Contains("{{api-token}}"))
                     {
                         apiToken = _tokenStore.CreateToken("api");
 
@@ -111,22 +111,16 @@ namespace SampleWebSite.Middleware
                     var identity = identification == null ? string.Empty : (identification.IsAnonymous ? "Anonymous" : identification.Identity);
 
                     var session = context.GetFeature<ISession>();
-                    var username = session == null ? string.Empty : session.Get<string>("username");
-                    var purposes = session == null ? string.Empty : session.Get<string>("purposes");
-                    var outcome = session == null ? string.Empty : session.Get<string>("outcome");
-
                     var regex = new Regex("{{([^}]+)}}");
                     html = regex.Replace(html, m =>
                     {
-                        switch (m.Groups[1].Value.ToLower())
+                        var key = m.Groups[1].Value.ToLower();
+                        switch (key)
                         {
-                            case "apitoken": return apiToken;
+                            case "api-token": return apiToken;
                             case "identity": return identity;
-                            case "username": return username;
-                            case "purposes": return purposes;
-                            case "outcome": return outcome;
+                            default: return session == null ? string.Empty : (session.Get<string>(key) ?? string.Empty);
                         }
-                        return string.Empty;
                     });
 
                     var newBytes = encoding.GetBytes(html);

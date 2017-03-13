@@ -33,15 +33,15 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             _commandFactory = commandFactory;
 
             _configurationChange = configuration.Register(
-                "/OwinFramework/Facility/IdentityStore.Prius",
+                "/owinFramework/facility/identityStore.Prius",
                 c => _configuration = c, 
                 new Configuration());
         }
 
         public string CreateIdentity()
         {
-            var identity = "urn:" + _configuration.IdentityUrnNamespace + ":" 
-                + Guid.NewGuid().ToShortString(false).ToLower();
+            var identity = "urn:" + _configuration.IdentityUrnNamespace + ":"
+                + Guid.NewGuid().ToShortString(_configuration.MixedCaseIdentity);
 
             using (var command = _commandFactory.CreateStoredProcedure("sp_AddIdentity"))
             {
@@ -221,7 +221,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             {
                 case AuthenticationStatus.Authenticated:
                 {
-                    result.RememberMeToken = Guid.NewGuid().ToShortString(false);
+                    result.RememberMeToken = Guid.NewGuid().ToShortString(_configuration.MixedCaseTokens);
                     using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
                     {
                         using (var command = _commandFactory.CreateStoredProcedure("sp_AuthenticateSuccess"))
@@ -529,7 +529,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
         public string AddSharedSecret(string identity, string name, IList<string> purposes)
         {
-            var secret = Guid.NewGuid().ToShortString();
+            var secret = Guid.NewGuid().ToShortString(_configuration.MixedCaseSharedSecret);
             var purposeString = JoinPurposes(purposes);
 
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
