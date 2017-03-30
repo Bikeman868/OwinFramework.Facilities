@@ -11,6 +11,8 @@ using OwinFramework.Facilities.IdentityStore.Prius.Exceptions;
 using OwinFramework.Facilities.IdentityStore.Prius.Records;
 using OwinFramework.Interfaces.Builder;
 using OwinFramework.InterfacesV1.Facilities;
+using OwinFramework.InterfacesV1.Middleware;
+using OwinFramework.MiddlewareHelpers.Identification;
 using Prius.Contracts.Interfaces;
 using Prius.Contracts.Interfaces.Connections;
 
@@ -60,6 +62,87 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
             return identity;
         }
+
+        public void DeleteClaim(string identity, string claimName)
+        {
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                IdentityClaimRecord claim;
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetIdentityClaims"))
+                {
+                    command.AddParameter("identity", identity);
+                    using (var claims = context.ExecuteEnumerable<IdentityClaimRecord>(command))
+                    {
+                        claim = claims.FirstOrDefault(c => string.Equals(c.Name, claimName, StringComparison.OrdinalIgnoreCase));
+                    }
+                }
+
+                if (claim != null)
+                {
+                    using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteClaim"))
+                    {
+                        command.AddParameter("who_identity", identity);
+                        command.AddParameter("reason", "Delete claim");
+                        command.AddParameter("claim_id", claim.ClaimId);
+                        context.ExecuteNonQuery(command);
+                    }
+                }
+            }
+        }
+
+        public IList<IIdentityClaim> GetClaims(string identity)
+        {
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetIdentityClaims"))
+                {
+                    command.AddParameter("identity", identity);
+                    using (var claims = context.ExecuteEnumerable<IdentityClaimRecord>(command))
+                    {
+                        return claims.Cast<IIdentityClaim>().ToList();
+                    }
+                }
+            }
+        }
+
+        public void UpdateClaim(string identity, IIdentityClaim claim)
+        {
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                IdentityClaimRecord existingClaim;
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetIdentityClaims"))
+                {
+                    command.AddParameter("identity", identity);
+                    using (var claims = context.ExecuteEnumerable<IdentityClaimRecord>(command))
+                    {
+                        existingClaim = claims.FirstOrDefault(c => string.Equals(c.Name, claim.Name, StringComparison.OrdinalIgnoreCase));
+                    }
+                }
+
+                if (existingClaim != null)
+                {
+                    using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteClaim"))
+                    {
+                        command.AddParameter("who_identity", identity);
+                        command.AddParameter("reason", "Update claim");
+                        command.AddParameter("claim_id", existingClaim.ClaimId);
+                        context.ExecuteNonQuery(command);
+                    }
+                }
+
+                using (var command = _commandFactory.CreateStoredProcedure("sp_AddClaim"))
+                {
+                    command.AddParameter("who_identity", identity);
+                    command.AddParameter("reason", "Update claim");
+                    command.AddParameter("identity", identity);
+                    command.AddParameter("name", claim.Name);
+                    command.AddParameter("value", claim.Value);
+                    command.AddParameter("status", (int)claim.Status);
+                    context.ExecuteNonQuery(command);
+                }
+            }
+        }
+
 
         #region Certificates
 
@@ -112,6 +195,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             int version;
             ComputeHash(password, out version, out salt, out hash);
 
+            bool success;
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
                 CheckIdentityExists(context, identity);
@@ -140,10 +224,23 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     command.AddParameter("salt", salt);
                     using (var reader = context.ExecuteReader(command))
                     {
-                        return reader.Read();
+                        success = reader.Read();
                     }
                 }
             }
+
+            if (success)
+            {
+                var claim = new IdentityClaim
+                {
+                    Name = ClaimNames.Username,
+                    Value = userName,
+                    Status = ClaimStatus.Verified
+                };
+                UpdateClaim(identity, claim);
+            }
+
+            return success;
         }
 
         public IAuthenticationResult AuthenticateWithCredentials(string userName, string password)
@@ -336,6 +433,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
         public bool DeleteCredential(ICredential credential)
         {
+            bool success;
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
                 using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteUsernameCredentials"))
@@ -344,9 +442,13 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     command.AddParameter("reason", "Delete credential");
                     command.AddParameter("username", credential.Username);
                     var rowsAffected = context.ExecuteNonQuery(command);
-                    return rowsAffected > 0;
+                    success = rowsAffected > 0;
                 }
             }
+
+            if (success) DeleteClaim(credential.Identity, ClaimNames.Username);
+
+            return success;
         }
 
         public IEnumerable<ICredential> GetCredentials(string identity)
@@ -675,5 +777,6 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                 return new List<string>();
             return purposes.Split(',');
         }
+
     }
 }

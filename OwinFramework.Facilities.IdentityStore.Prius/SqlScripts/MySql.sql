@@ -7,6 +7,18 @@ DROP DATABASE IF EXISTS `identity`;
 CREATE DATABASE IF NOT EXISTS `identity` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
 USE `identity`;
 
+CREATE TABLE IF NOT EXISTS `tbl_claim`
+(
+  `claim_id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `identity_id` BIGINT(20) unsigned NOT NULL,
+  `name` VARCHAR(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` VARCHAR(200) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` INT NOT NULL,
+  PRIMARY KEY (`claim_id`),
+  KEY `ix_identity` (`identity_id`),
+  UNIQUE INDEX `ix_name` (`identity_id`, `name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `tbl_credential`
 (
   `credential_id` BIGINT(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -130,6 +142,84 @@ BEGIN
 		tbl_identity i
 	WHERE
 		i.identity_id = `identity_id`;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_AddClaim`
+(
+	IN `who_identity` VARCHAR(50),
+	IN `reason` VARCHAR(50),
+	IN `identity` VARCHAR(50), 
+	IN `name` VARCHAR(30), 
+	IN `value` VARCHAR(200), 
+	IN `status` INT
+) DETERMINISTIC
+BEGIN
+	DECLARE identity_id BIGINT UNSIGNED;
+	DECLARE who_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
+	
+	SELECT
+		i.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = identity;
+		
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Add claim',
+		NULL,
+		CONCAT(`name`, '=', `value`)
+	);
+	
+	INSERT INTO tbl_claim
+	(
+		`identity_id`,
+		`name`,
+		`value`,
+		`status`
+	)VALUES(
+		`identity_id`,
+		`name`,
+		`value`,
+		`status`
+	);
+	
+	SELECT
+		c.`claim_id`,
+		`identity`,
+		c.`identity_id`,
+		c.`name`,
+		c.`value`,
+		c.`status`
+	FROM
+		tbl_claim c
+	WHERE
+		c.`claim_id` = LAST_INSERT_ID();
 END//
 DELIMITER ;
 
@@ -491,6 +581,62 @@ END//
 DELIMITER ;
 
 /********************************************************************/
+
+DELIMITER //
+CREATE PROCEDURE `sp_DeleteClaim`
+(
+	IN `who_identity` VARCHAR(50),
+	IN `reason` VARCHAR(50),
+	IN `claim_id` BIGINT UNSIGNED
+) DETERMINISTIC
+BEGIN
+	DECLARE who_id BIGINT UNSIGNED;
+	DECLARE identity_id BIGINT UNSIGNED;
+	
+	SELECT
+		i.identity_id
+	INTO
+		who_id
+	FROM
+		tbl_identity i
+	WHERE
+		i.identity = who_identity;
+	
+	SELECT
+		c.identity_id
+	INTO
+		identity_id
+	FROM
+		tbl_claim c
+	WHERE
+		c.claim_id = `claim_id`;
+	
+	INSERT INTO tbl_audit
+	(
+		`when`,
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		`action`,
+		`original_value`,
+		`new_value`
+	) VALUES (
+		UTC_TIMESTAMP(),
+		`who_id`,
+		`reason`,
+		`identity_id`,
+		'Delete claim',
+		`claim_id`,
+		NULL
+	);
+
+	DELETE 
+	FROM 
+		c USING tbl_claim AS c
+	WHERE 
+		c.claim_id = claim_id;
+END//
+DELIMITER ;
 
 DELIMITER //
 CREATE PROCEDURE `sp_DeleteCredential`
@@ -1046,6 +1192,28 @@ BEGIN
 		c.locked
 	FROM
 		tbl_credential c
+			JOIN
+		tbl_identity i ON c.identity_id = i.identity_id
+	WHERE
+		i.identity = `identity`;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE `sp_GetIdentityClaims`
+(
+	IN `identity` VARCHAR(50)
+) DETERMINISTIC
+BEGIN
+	SELECT
+		c.claim_id,
+		c.identity_id,
+		i.`identity`,
+		c.`name`,
+		c.`value`,
+		c.`status`
+	FROM
+		tbl_claim c
 			JOIN
 		tbl_identity i ON c.identity_id = i.identity_id
 	WHERE

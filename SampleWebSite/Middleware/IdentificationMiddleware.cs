@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Owin;
 using OwinFramework.Builder;
@@ -9,6 +10,7 @@ using OwinFramework.Interfaces.Routing;
 using OwinFramework.InterfacesV1.Facilities;
 using OwinFramework.InterfacesV1.Middleware;
 using OwinFramework.InterfacesV1.Upstream;
+using OwinFramework.MiddlewareHelpers.Identification;
 using SampleWebSite.Extensions;
 
 namespace SampleWebSite.Middleware
@@ -59,36 +61,29 @@ namespace SampleWebSite.Middleware
 
         public Task RouteRequest(IOwinContext context, Func<Task> next)
         {
-            var identification = new Identification();
-            context.SetFeature<IIdentification>(identification);
-
-            var upstream = new Upstream();
-            context.SetFeature<IUpstreamIdentification>(upstream);
-
             var cookie = context.Request.Cookies[IdentityCookie];
             if (cookie == null)
             {
-                identification.IsAnonymous = true;
+                cookie = string.Empty;
                 var rememberMe = context.Request.Cookies[RememberMeCookie];
                 if (rememberMe != null)
                 {
                     var authenticationResult = _identityStore.RememberMe(rememberMe);
                     if (authenticationResult.Status == AuthenticationStatus.Authenticated)
                     {
-                        identification.IsAnonymous = false;
-                        identification.Identity = authenticationResult.Identity;
                         context.Response.Cookies.Append(IdentityCookie, authenticationResult.Identity);
+                        cookie = authenticationResult.Identity;
                     }
                     SetAuthentication(context, authenticationResult);
                 }
             }
-            else
-            {
-                identification.Identity = cookie;
-            }
+            var identification = new Identification(cookie, _identityStore.GetClaims(cookie));
+
+            context.SetFeature<IIdentification>(identification);
+            context.SetFeature<IUpstreamIdentification>(identification);
 
             if (string.Equals(SecureHomePage, context.Request.Path.Value, StringComparison.OrdinalIgnoreCase))
-                upstream.AllowAnonymous = true;
+                identification.AllowAnonymous = true;
 
             if (string.Equals("POST", context.Request.Method, StringComparison.OrdinalIgnoreCase))
             {
@@ -143,11 +138,10 @@ namespace SampleWebSite.Middleware
         public Task Invoke(IOwinContext context, Func<Task> next)
         {
             var identification = context.GetFeature<IIdentification>() as Identification;
-            var upstream = context.GetFeature<IUpstreamIdentification>() as Upstream;
-            if (identification == null || upstream == null)
+            if (identification == null)
                 throw new Exception("Something went terribly wrong");
-            
-            if (identification.IsAnonymous && !upstream.AllowAnonymous)
+
+            if (identification.IsAnonymous && !identification.AllowAnonymous)
                 return Task.Factory.StartNew(() => context.Response.Redirect(SecureHomePage));
 
             return next();
@@ -162,7 +156,7 @@ namespace SampleWebSite.Middleware
                 if (_identityStore.AddCredentials(identity, form["username"], form["password"]))
                 {
                     identification.Identity = identity;
-                    identification.IsAnonymous = false;
+                    identification.Claims = _identityStore.GetClaims(identity);
 
                     var result = _identityStore.AuthenticateWithCredentials(form["username"], form["password"]);
                     if (result.Status == AuthenticationStatus.Authenticated)
@@ -187,7 +181,7 @@ namespace SampleWebSite.Middleware
             if (result.Status == AuthenticationStatus.Authenticated)
             {
                 identification.Identity = result.Identity;
-                identification.IsAnonymous = false;
+                identification.Claims = _identityStore.GetClaims(result.Identity);
 
                 context.Response.Cookies.Append(IdentityCookie, result.Identity);
                 context.Response.Cookies.Append(RememberMeCookie, result.RememberMeToken);
@@ -199,7 +193,7 @@ namespace SampleWebSite.Middleware
         private void Logout(IOwinContext context, Identification identification)
         {
             identification.Identity = "";
-            identification.IsAnonymous = true;
+            identification.Claims.Clear();
 
             context.Response.Cookies.Delete(IdentityCookie);
             context.Response.Cookies.Delete(RememberMeCookie);
@@ -211,7 +205,7 @@ namespace SampleWebSite.Middleware
         private void EndSession(IOwinContext context, Identification identification)
         {
             identification.Identity = "";
-            identification.IsAnonymous = true;
+            identification.Claims.Clear();
 
             context.Response.Cookies.Delete(IdentityCookie);
 
@@ -319,7 +313,7 @@ namespace SampleWebSite.Middleware
                         {
                             SetOutcome(context, identification, "Password succesfully reset");
                             identification.Identity = credential.Identity;
-                            identification.IsAnonymous = false;
+                            identification.Claims = _identityStore.GetClaims(credential.Identity);
 
                             context.Response.Cookies.Append(IdentityCookie, credential.Identity);
                             context.Response.Cookies.Delete(RememberMeCookie);
@@ -350,6 +344,7 @@ namespace SampleWebSite.Middleware
             if (session == null) return;
 
             session.Set("identity", identification.IsAnonymous ? "Anonymous" : identification.Identity);
+            session.Set("claims", string.Join(", ", identification.Claims.Select(c => c.Name + (c.Status == ClaimStatus.Verified ? " = " : " ~ ") + c.Value)));
             session.Set("outcome", outcome);
         }
 
@@ -357,6 +352,9 @@ namespace SampleWebSite.Middleware
         {
             var session = context.GetFeature<ISession>();
             if (session == null) return;
+
+            var claims = _identityStore.GetClaims(authenticationResult.Identity);
+            session.Set("claims", string.Join(", ", claims.Select(c => c.Name + (c.Status == ClaimStatus.Verified ? " = " : " ~ ") + c.Value)));
 
             session.Set("identity", authenticationResult.Identity);
             session.Set("outcome", authenticationResult.Status.ToString());
@@ -377,17 +375,5 @@ namespace SampleWebSite.Middleware
             else
                 context.Response.Redirect(SecureHomePage);
         }
-
-        private class Upstream : IUpstreamIdentification
-        {
-            public bool AllowAnonymous { get; set; }
-        }
-
-        private class Identification : IIdentification
-        {
-            public string Identity { get; set; }
-            public bool IsAnonymous { get; set; }
-        }
-
     }
 }

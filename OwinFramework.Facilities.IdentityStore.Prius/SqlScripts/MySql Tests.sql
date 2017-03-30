@@ -6,6 +6,7 @@ set @token='jhahjfgg';
 call sp_AddIdentity(@identity, 'Create account', @identity);
 call sp_AddCredential(@identity, 'Create account', @identity, @username, null, 1, 'HASH', 'SALT');
 call sp_AddSharedSecret(@identity, 'Add API key', @identity, 'API Key', @secret, 'ReadContacts');
+call sp_AddClaim(@identity, 'Add claim', @identity, 'email', @username, 1);
 
 call sp_GetIdentity(@identity);
 call sp_GetIdentitySharedSecrets(@identity);
@@ -14,6 +15,7 @@ call sp_GetUserNameCredential(@username);
 call sp_GetUserNameCredential('invalid');
 call sp_GetSharedSecret(@secret);
 call sp_GetSharedSecret('invalid');
+call sp_GetIdentityClaims(@identity);
 
 call sp_GetUserNameCredential(@username);
 call sp_AuthenticateSuccess(@identity, null, @token, 'Credentials', 1, null);
