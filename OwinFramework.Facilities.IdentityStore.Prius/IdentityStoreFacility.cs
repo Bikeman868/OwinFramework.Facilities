@@ -391,7 +391,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             }
             else
             {
-                if (authenticateRecord.Expires.HasValue && authenticateRecord.Expires > DateTime.UtcNow)
+                if (authenticateRecord.Expires.HasValue && authenticateRecord.Expires < DateTime.UtcNow)
                 {
                     result.Status = AuthenticationStatus.Expired;
                 }

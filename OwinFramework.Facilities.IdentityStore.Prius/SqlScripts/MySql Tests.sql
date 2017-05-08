@@ -33,3 +33,4 @@ call sp_DeleteIdentityCredentials(@identity, 'Change password', @identity);
 call sp_DeleteSharedSecret(@identity, 'Revoke API key', @secret);
 
 call sp_GetAudit(@identity);
+
