@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 
 namespace OwinFramework.Facilities.TokenStore.Prius.Rules
@@ -34,6 +35,8 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
 
         private class Instance : ITokenValidator
         {
+            public string Name { get { return "rate"; } }
+            
             public TimeSpan TimeWindow;
             public int MaximumUseCount;
 
@@ -64,41 +67,26 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
                 return false;
             }
 
-            public string Serialize()
+            public JObject Serialize()
             {
                 lock (_locker)
                 {
-                    return JsonConvert.SerializeObject(new SerializableTokenRateRule
+                    return new JObject 
                     {
-                        CurrentCount = _currentCount,
-                        EndTime = _endTime,
-                        MaximumUseCount = MaximumUseCount,
-                        TimeWindow = TimeWindow
-                    });
+                        {"c", new JArray(_currentCount)},
+                        {"e", new JArray(_endTime)},
+                    };
                 }
             }
 
-            public void Hydrate(string serializedData)
+            public void Hydrate(JObject json)
             {
                 lock (_locker)
                 {
-
-                    var tokenRuleSettings = JsonConvert.DeserializeObject<SerializableTokenRateRule>(serializedData);
-
-                    _endTime = tokenRuleSettings.EndTime;
-                    _currentCount = tokenRuleSettings.CurrentCount;
-                    MaximumUseCount = tokenRuleSettings.MaximumUseCount;
-                    TimeWindow = tokenRuleSettings.TimeWindow;
+                    _currentCount = json.Value<int>("c");
+                    _endTime = json.Value<DateTime>("e");
                 }
             }
-        }
-
-        private class SerializableTokenRateRule
-        {
-            public TimeSpan TimeWindow { get; set; }
-            public int MaximumUseCount { get; set; }
-            public int CurrentCount { get; set; }
-            public DateTime EndTime { get; set; }
         }
     }
 }

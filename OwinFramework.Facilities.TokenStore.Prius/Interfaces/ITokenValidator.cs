@@ -1,4 +1,6 @@
 ﻿
+using Newtonsoft.Json.Linq;
+
 namespace OwinFramework.Facilities.TokenStore.Prius.Interfaces
 {
     public enum Validity { Valid, TemporaryInvalid, PermenantInvalid }
@@ -11,9 +13,12 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Interfaces
 
     public interface ITokenValidator
     {
+        string Name { get; }
+
         CheckResult CheckIsValid(string identity, string purpose);
         bool CheckIsExpired();
-        string Serialize();
-        void Hydrate(string serializedData);
+
+        JObject Serialize();
+        void Hydrate(JObject json);
     }
 }

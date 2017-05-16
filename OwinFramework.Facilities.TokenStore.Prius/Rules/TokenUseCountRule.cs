@@ -1,5 +1,7 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 
 namespace OwinFramework.Facilities.TokenStore.Prius.Rules
@@ -31,6 +33,8 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
 
         private class Instance : ITokenValidator
         {
+            public string Name { get { return "uses"; } }
+            
             public int RemainingUsages;
 
             public CheckResult CheckIsValid(string identity, string purpose)
@@ -49,14 +53,17 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
                 return RemainingUsages <= 0;
             }
 
-            public string Serialize()
+            public JObject Serialize()
             {
-                return JsonConvert.SerializeObject(RemainingUsages);
+                return new JObject 
+                {
+                    {"r", new JArray(RemainingUsages)}
+                };
             }
 
-            public void Hydrate(string serializedData)
+            public void Hydrate(JObject json)
             {
-                RemainingUsages = JsonConvert.DeserializeObject<int>(serializedData);
+                RemainingUsages = json.Value<int>("r");
             }
         }
     }

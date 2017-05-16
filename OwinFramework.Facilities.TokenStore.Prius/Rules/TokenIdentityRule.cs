@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 
 namespace OwinFramework.Facilities.TokenStore.Prius.Rules
@@ -8,6 +9,8 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
     {
         private string _identity;
 
+        public string Name { get { return "identity"; } }
+        
         public ITokenValidator Initialize(string identity)
         {
             _identity = identity;
@@ -36,14 +39,14 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
             return false;
         }
 
-        public string Serialize()
+        public JObject Serialize()
         {
-            return JsonConvert.SerializeObject(_identity);
+            return new JObject { { "i", _identity } };
         }
 
-        public void Hydrate(string serializedData)
+        public void Hydrate(JObject json)
         {
-            _identity = JsonConvert.DeserializeObject<string>(serializedData);
+            _identity = json.Value<string>("i");
         }
 
         public ITokenValidator GetInstance()

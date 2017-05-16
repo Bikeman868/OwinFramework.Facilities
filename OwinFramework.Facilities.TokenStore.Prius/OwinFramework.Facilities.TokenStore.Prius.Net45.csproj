@@ -40,12 +40,24 @@
       <HintPath>..\packages\Microsoft.Owin.3.0.1\lib\net45\Microsoft.Owin.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="OwinFramework, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Owin.Framework.2.4.0\lib\net45\OwinFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Prius.Contracts, Version=2.0.1.20, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Prius.2.0.1\lib\net45\Prius.Contracts.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Prius.Orm, Version=2.0.1.20, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Prius.2.0.1\lib\net45\Prius.Orm.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -55,19 +67,44 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Urchin.Client, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Urchin.Client.1.2.0\lib\net45\Urchin.Client.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration.cs" />
+    <Compile Include="DataContracts\Token.cs" />
+    <Compile Include="DataContracts\TokenResponse.cs" />
+    <Compile Include="Interfaces\ITokenDatabase.cs" />
+    <Compile Include="Interfaces\ITokenFactory.cs" />
+    <Compile Include="Interfaces\ITokenType.cs" />
+    <Compile Include="Interfaces\ITokenValidationRule.cs" />
+    <Compile Include="Interfaces\ITokenValidator.cs" />
+    <Compile Include="Interfaces\RuleAttribute.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CachedToken.cs" />
-    <Compile Include="Token.cs" />
+    <Compile Include="Records\TokenRecord.cs" />
+    <Compile Include="Rules\TokenExpiryRule.cs" />
+    <Compile Include="Rules\TokenIdentityRule.cs" />
+    <Compile Include="Rules\TokenPurposeRule.cs" />
+    <Compile Include="Rules\TokenRateRule.cs" />
+    <Compile Include="Rules\TokenRule.cs" />
+    <Compile Include="Rules\TokenUseCountRule.cs" />
     <Compile Include="TokenStoreFacility.cs" />
+    <Compile Include="Tokens\TokenDatabase.cs" />
+    <Compile Include="Tokens\TokenFactory.cs" />
+    <Compile Include="Tokens\TokenType.cs" />
+    <Compile Include="Tokens\TokenTypeConfiguration.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.OwinFramework.Facilities.TokenStore.Prius.Net45.config" />
     <None Include="readme.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="SqlScripts\MySql Tests.sql" />
+    <None Include="SqlScripts\MySql.sql" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

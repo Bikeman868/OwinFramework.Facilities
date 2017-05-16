@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 
 namespace OwinFramework.Facilities.TokenStore.Prius.Rules
@@ -31,6 +32,8 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
 
         private class Instance : ITokenValidator
         {
+            public string Name { get { return "expiry"; } }
+
             public DateTime Expiry;
 
             public CheckResult CheckIsValid(string identity, string purpose)
@@ -48,14 +51,14 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
                 return DateTime.UtcNow >= Expiry;
             }
 
-            public string Serialize()
+            public JObject Serialize()
             {
-                return JsonConvert.SerializeObject(Expiry.ToUniversalTime());
+                return new JObject {{"d", Expiry}};
             }
 
-            public void Hydrate(string serializedData)
+            public void Hydrate(JObject json)
             {
-                Expiry = JsonConvert.DeserializeObject<DateTime>(serializedData);
+                Expiry = json.Value<DateTime>("d");
             }
         }
     }

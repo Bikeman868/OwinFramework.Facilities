@@ -13,9 +13,7 @@ CREATE TABLE IF NOT EXISTS `tbl_token`
   `updated` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `token` VARCHAR(30) COLLATE utf8mb4_unicode_ci NOT NULL,
   `type` VARCHAR(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `identity` VARCHAR(50) COLLATE utf8mb4_unicode_ci NULL,
-  `purposes` VARCHAR(2000) COLLATE utf8mb4_unicode_ci NULL,
-  `state` VARCHAR(200) COLLATE utf8mb4_unicode_ci NULL,
+  `state` VARCHAR(1000) COLLATE utf8mb4_unicode_ci NULL,
   PRIMARY KEY (`token_id`),
   KEY `ix_token` (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -32,8 +30,6 @@ BEGIN
 		t.`token_id`,
 		t.`token`,
 		t.`type`,
-		t.`identity`,
-		t.`purposes`,
 		t.`state`
 	FROM
 		`tbl_token` t
@@ -52,8 +48,6 @@ BEGIN
 		t.`token_id`,
 		t.`token`,
 		t.`type`,
-		t.`identity`,
-		t.`purposes`,
 		t.`state`
 	FROM
 		`tbl_token` t
@@ -67,9 +61,7 @@ CREATE PROCEDURE `sp_AddToken`
 (
 	IN `token` VARCHAR(30),
 	IN `type` VARCHAR(30),
-	IN `identity` VARCHAR(50),
-	IN `purposes` VARCHAR(2000),
-	IN `state` VARCHAR(200)
+	IN `state` VARCHAR(1000)
 ) DETERMINISTIC
 BEGIN
 	DECLARE token_id BIGINT UNSIGNED;
@@ -78,14 +70,10 @@ BEGIN
 	(
 		`token`,
 		`type`,
-		`identity`,
-		`purposes`,
 		`state`
 	)VALUES(
 		`token`,
 		`type`,
-		`identity`,
-		`purposes`,
 		`state`
 	);
 	
@@ -132,7 +120,7 @@ END//
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE `sp_clean`()
+CREATE PROCEDURE `sp_Clean`()
 BEGIN
 	DECLARE cutoff DATETIME;
 	SET cutoff = DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY);

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 using OwinFramework.Facilities.TokenStore.Prius.Rules;
 
@@ -34,5 +35,36 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
             _rules.Add(rule);
         }
 
+        public IList<ITokenValidator> GetValidators(JObject json)
+        {
+            var result = new List<ITokenValidator>();
+
+            var purposeRule = new TokenPurposeRule();
+            var purposeData = json.Value<JObject>(purposeRule.Name);
+            if (purposeData != null)
+            {
+                purposeRule.Hydrate(purposeData);
+                result.Add(purposeRule);
+            }
+
+            var identityRule = new TokenIdentityRule();
+            var identityData = json.Value<JObject>(identityRule.Name);
+            if (identityData != null)
+            {
+                identityRule.Hydrate(identityData);
+                result.Add(identityRule);
+            }
+
+            foreach (var rule in _rules)
+            {
+                var instance = rule.GetInstance();
+                var instanceData = json.Value<JObject>(instance.Name);
+                if (instanceData != null)
+                    instance.Hydrate(instanceData);
+                result.Add(instance);
+            }
+
+            return result;
+        }
     }
 }

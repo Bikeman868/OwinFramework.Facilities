@@ -91,6 +91,7 @@
     <Compile Include="Rules\TokenUseCountRule.cs" />
     <Compile Include="TokenStoreFacility.cs" />
     <Compile Include="DataContracts\Token.cs" />
+    <Compile Include="Interfaces\ITokenDatabase.cs" />
     <Compile Include="Tokens\TokenFactory.cs" />
     <Compile Include="Tokens\TokenDatabase.cs" />
     <Compile Include="Tokens\TokenType.cs" />

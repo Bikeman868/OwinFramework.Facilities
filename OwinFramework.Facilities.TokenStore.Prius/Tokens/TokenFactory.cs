@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.DataContracts;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 using OwinFramework.Facilities.TokenStore.Prius.Rules;
@@ -48,10 +49,23 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
 
         public Token CreateToken(Records.TokenRecord tokenRecord)
         {
-            var purposeList = string.IsNullOrEmpty(tokenRecord.Purposes)
-                ? Enumerable.Empty<string>()
-                : tokenRecord.Purposes.Split(',').Select(p => p.Trim()).Where(p => !string.IsNullOrEmpty(p));
-            return CreateToken(tokenRecord.TokenType, tokenRecord.Identity, purposeList);
+            if (tokenRecord == null) return null;
+
+            var type = tokenRecord.TokenType.ToLower();
+            var json = new JObject(tokenRecord.TokenState);
+
+            ITokenType tokenType;
+            if (_tokenTypes.TryGetValue(type, out tokenType))
+            {
+                var token = new Token
+                {
+                    Type = type,
+                    Validators = tokenType.GetValidators(json)
+                };
+                return token;
+            }
+
+            return null;
         }
 
         public IList<string> TokenTypes 

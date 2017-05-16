@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using Ioc.Modules;
 using OwinFramework.Interfaces.Builder;
-using OwinFramework.InterfacesV1.Facilities;
+
+using OwinInterfaces = OwinFramework.InterfacesV1.Facilities;
+using PriusInterfaces = Prius.Contracts.Interfaces;
 
 namespace OwinFramework.Facilities.TokenStore.Prius
 {
@@ -20,8 +22,13 @@ namespace OwinFramework.Facilities.TokenStore.Prius
         {
             _iocRegistrations = new List<IocRegistration>
             {
-                new IocRegistration().Init<ITokenStore, TokenStoreFacility>(),
-                new IocRegistration().Init<ICache>(),
+                new IocRegistration().Init<OwinInterfaces.ITokenStore, TokenStoreFacility>(),
+
+                new IocRegistration().Init<Interfaces.ITokenFactory, Tokens.TokenFactory>(),
+                new IocRegistration().Init<Interfaces.ITokenDatabase, Tokens.TokenDatabase>(),
+
+                new IocRegistration().Init<PriusInterfaces.ICommandFactory>(),
+                new IocRegistration().Init<PriusInterfaces.IContextFactory>(),
                 new IocRegistration().Init<IConfiguration>(),
             };
         }

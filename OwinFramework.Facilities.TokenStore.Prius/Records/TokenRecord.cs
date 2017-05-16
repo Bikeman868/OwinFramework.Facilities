@@ -13,12 +13,6 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Records
         [Mapping("type")]
         public string TokenType { get; set; }
 
-        [Mapping("identity")]
-        public string Identity { get; set; }
-
-        [Mapping("purposes")]
-        public string Purposes { get; set; }
-
         [Mapping("state")]
         public string TokenState { get; set; }
     }

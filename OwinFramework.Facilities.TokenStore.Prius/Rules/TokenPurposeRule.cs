@@ -1,14 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 
 namespace OwinFramework.Facilities.TokenStore.Prius.Rules
 {
     public class TokenPurposeRule : ITokenValidationRule, ITokenValidator
     {
-        private IList<string> _purposes;
+        private List<string> _purposes;
 
+        public string Name { get { return "purpose"; } }
+        
         public ITokenValidator Initialize(IEnumerable<string> purposes)
         {
             if (purposes == null)
@@ -39,14 +42,14 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
             return false;
         }
 
-        public string Serialize()
+        public JObject Serialize()
         {
-            return JsonConvert.SerializeObject(_purposes);
+            return new JObject { { "p", new JArray(_purposes) } };
         }
 
-        public void Hydrate(string serializedData)
+        public void Hydrate(JObject json)
         {
-            _purposes = JsonConvert.DeserializeObject<IList<string>>(serializedData);
+            _purposes = json.Value<List<string>>("p");
         }
 
         public ITokenValidator GetInstance()
