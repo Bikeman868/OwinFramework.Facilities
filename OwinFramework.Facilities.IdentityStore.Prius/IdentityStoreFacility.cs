@@ -231,12 +231,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
             if (success)
             {
-                var claim = new IdentityClaim
-                {
-                    Name = ClaimNames.Username,
-                    Value = userName,
-                    Status = ClaimStatus.Verified
-                };
+                var claim = new IdentityClaim(ClaimNames.Username, userName, ClaimStatus.Verified);
                 UpdateClaim(identity, claim);
             }
 

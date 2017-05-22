@@ -1,6 +1,6 @@
 USE token;
 
-CALL sp_AddToken('abcdefg', 'password-reset', 'urn:user:12345', 'someone@mailinator.com', '{"uses":0}');
+CALL sp_AddToken('abcdefg', 'password-reset', '{"uses":0}');
 
 CALL sp_GetToken('abcdefg');
 CALL sp_GetTokenById(1);
