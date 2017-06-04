@@ -24,15 +24,12 @@ namespace SampleWebSite.Middleware
         string IMiddleware.Name { get; set; }
 
         private readonly ITokenStore _tokenStore;
-        private readonly IIdentityStore _identityStore;
         private readonly PathString _deleteTokenPath;
 
         public OutputFilterMiddleware(
-            ITokenStore tokenStore, 
-            IIdentityStore identityStore)
+            ITokenStore tokenStore)
         {
             _tokenStore = tokenStore;
-            _identityStore = identityStore;
 
             // Note that this path must be on a route where this middleware
             // will run. Since this middleware is designed to inject script

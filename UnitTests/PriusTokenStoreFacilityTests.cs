@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using NUnit.Framework;
 using OwinFramework.Builder;
 using OwinFramework.Facilities.TokenStore.Prius;
@@ -43,6 +44,22 @@ namespace UnitTests
                         Rules = new List<RuleConfiguration>
                         {
                             new RuleConfiguration{Type = "Expiry", Json = "{\"expiryTime\":\"00:00:10\"}"}
+                        }
+                    },
+                    new TokenTypeConfiguration
+                    {
+                        Name = "password-reset",
+                        Rules = new List<RuleConfiguration>
+                        {
+                            new RuleConfiguration{Type = "UseCount", Json = "{\"maxUseCount\":2}"}
+                        }
+                    },
+                    new TokenTypeConfiguration
+                    {
+                        Name = "api-call",
+                        Rules = new List<RuleConfiguration>
+                        {
+                            new RuleConfiguration{Type = "Rate", Json = "{\"window\":\"00:00:02\", \"maxUseCount\":10}"}
                         }
                     }
                 }
@@ -148,7 +165,7 @@ namespace UnitTests
         }
 
         [Test]
-        public void Should_support_milti_purpose_tokens()
+        public void Should_support_multi_purpose_tokens()
         {
             const string tokenType = "session";
             var purpose = new[] { "login", "logout" };
@@ -170,6 +187,54 @@ namespace UnitTests
             token = _tokenStore.GetToken(tokenType, tokenId);
             Assert.IsNotNull(token);
             Assert.AreEqual(TokenStatus.NotAllowed, token.Status);
+        }
+
+        [Test]
+        public void Should_support_limited_use_count_tokens()
+        {
+            const string tokenType = "password-reset";
+            const string identity = "urn:user:1234";
+
+            var tokenId = _tokenStore.CreateToken(tokenType, "", identity);
+
+            var token = _tokenStore.GetToken(tokenType, tokenId, null, identity);
+
+            Assert.IsNotNull(token);
+            Assert.AreEqual(TokenStatus.Allowed, token.Status);
+
+            token = _tokenStore.GetToken(tokenType, tokenId, null, identity);
+
+            Assert.IsNotNull(token);
+            Assert.AreEqual(TokenStatus.Allowed, token.Status);
+
+            token = _tokenStore.GetToken(tokenType, tokenId, null, identity);
+
+            Assert.IsNotNull(token);
+            Assert.AreNotEqual(TokenStatus.Allowed, token.Status);
+        }
+
+        [Test]
+        public void Should_support_rate_limiting_tokens()
+        {
+            const string tokenType = "api-call";
+            const string purpose = "getUser";
+
+            var tokenId = _tokenStore.CreateToken(tokenType, purpose);
+
+            IToken token;
+
+            for (var i = 0; i < 10; i++)
+            {
+                token = _tokenStore.GetToken(tokenType, tokenId, purpose);
+                Assert.AreEqual(TokenStatus.Allowed, token.Status);
+            }
+            token = _tokenStore.GetToken(tokenType, tokenId, purpose);
+            Assert.AreEqual(TokenStatus.NotAllowed, token.Status);
+
+            Thread.Sleep(TimeSpan.FromSeconds(3));
+
+            token = _tokenStore.GetToken(tokenType, tokenId, purpose);
+            Assert.AreEqual(TokenStatus.Allowed, token.Status);
         }
 
         #region Mock implementations
@@ -238,66 +303,6 @@ namespace UnitTests
             }
         }
 
-        /*
-        private class TokenFactory: ITokenFactory
-        {
-
-            public IList<string> TokenTypes
-            {
-                get { return new[]{"session"}.ToList(); }
-            }
-
-            public Token CreateToken(string type, string identity, IEnumerable<string> purposes)
-            {
-                switch (type.ToLower())
-                {
-                    case "session":
-                        return new Token 
-                        {
-                            Type = type,
-                            Validators = new List<ITokenValidator>(new[] { new SessionTokenValidator() })
-                        };
-                }
-                return null;
-            }
-
-            public Token CreateToken(TokenRecord tokenRecord)
-            {
-                return new Token
-                {
-                    Type = tokenRecord.TokenType,
-                    Validators = new List<ITokenValidator>(new[] { new SessionTokenValidator() })
-                };
-            }
-
-            private class SessionTokenValidator: ITokenValidator
-            {
-                public string Name
-                {
-                    get { return "session"; }
-                }
-
-                public CheckResult CheckIsValid(string identity, string purpose)
-                {
-                    return new CheckResult { IsStatusModified = false, Validity = Validity.Valid };
-                }
-
-                public bool CheckIsExpired()
-                {
-                    return false;
-                }
-
-                public JObject Serialize()
-                {
-                    return new JObject();
-                }
-
-                public void Hydrate(JObject json)
-                {
-                }
-            }
-        }
-        */
         #endregion
     }
 }

@@ -32,6 +32,9 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
 
         public Token CreateToken(string type, string identity, IEnumerable<string> purposes)
         {
+            if (_tokenTypes == null)
+                throw new Exception("Token factory configuration is invalid");
+
             type = type.ToLower();
 
             ITokenType tokenType;

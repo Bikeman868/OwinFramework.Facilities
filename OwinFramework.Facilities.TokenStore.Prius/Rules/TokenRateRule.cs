@@ -73,8 +73,8 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
                 {
                     return new JObject 
                     {
-                        {"c", new JArray(_currentCount)},
-                        {"e", new JArray(_endTime)},
+                        {"c", new JValue(_currentCount)},
+                        {"e", new JValue(_endTime)},
                     };
                 }
             }

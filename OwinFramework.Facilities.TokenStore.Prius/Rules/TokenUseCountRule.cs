@@ -57,7 +57,7 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
             {
                 return new JObject 
                 {
-                    {"r", new JArray(RemainingUsages)}
+                    {"r", new JValue(RemainingUsages)}
                 };
             }
 

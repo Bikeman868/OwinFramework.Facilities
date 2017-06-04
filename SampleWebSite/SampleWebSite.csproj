@@ -156,9 +156,9 @@
       <Project>{79fe0011-b4a8-4cbd-9dba-120223ee4318}</Project>
       <Name>OwinFramework.Facilities.IdentityStore.Prius.Net40</Name>
     </ProjectReference>
-    <ProjectReference Include="..\OwinFramework.Facilities.TokenStore.Cache\OwinFramework.Facilities.TokenStore.Cache.Net40.csproj">
-      <Project>{fc7c55b4-a55a-41f5-9100-e30af49c2365}</Project>
-      <Name>OwinFramework.Facilities.TokenStore.Cache.Net40</Name>
+    <ProjectReference Include="..\OwinFramework.Facilities.TokenStore.Prius\OwinFramework.Facilities.TokenStore.Prius.Net40.csproj">
+      <Project>{4d89904b-5832-4cac-9d6e-ec92660c837f}</Project>
+      <Name>OwinFramework.Facilities.TokenStore.Prius.Net40</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

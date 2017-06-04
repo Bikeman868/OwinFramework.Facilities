@@ -54,8 +54,8 @@
             "identityStore.Prius": {
                 "priusRepositoryName": "IdentityStore",
                 "identityUrnNamespace": "mydomain.id",
-                "mixedCaseTokens":  true,
-                "mixedCaseIdentity":  false,
+                "mixedCaseTokens": true,
+                "mixedCaseIdentity": false,
                 "mixedCaseSharedSecret": true,
                 "minimumUserNameLength": 5,
                 "maximumUserNameLength": 50,
@@ -70,6 +70,13 @@
             "tokenStore.Cache": {
                 "lifetime": "01:00:00",
                 "cachePrefix": "/tokens/"
+            },
+            "tokenStore.Prius": {
+                "priusRepositoryName": "TokenStore",
+                "tokenTypes": [
+                    { "name": "session", "rules": [ { "type": "expiry", "config": "{\"expiryTime\":\"00:20:00\"}" } ] },
+                    { "name": "api", "rules": [ { "type": "rate", "config": "{\"maxUseCount\":10, \"window\":\"00:00:10\"}" } ] }
+                ]
             }
         }
     },
@@ -80,6 +87,11 @@
                     "name": "Identity",
                     "type": "MySql",
                     "connectionString": "Server=localhost;Database=identity;Uid=test;Pwd=;"
+                },
+                {
+                    "name": "Token",
+                    "type": "MySql",
+                    "connectionString": "Server=localhost;Database=token;Uid=test;Pwd=;"
                 }
             ],
             "fallbackPolicies": [
@@ -90,6 +102,12 @@
                     "name": "IdentityStore",
                     "clusters": [
                         { "sequence": 1, "databases": [ "Identity" ], "fallbackPolicy": "none" }
+                    ]
+                },
+                {
+                    "name": "TokenStore",
+                    "clusters": [
+                        { "sequence": 1, "databases": [ "Token" ], "fallbackPolicy": "none" }
                     ]
                 }
             ]

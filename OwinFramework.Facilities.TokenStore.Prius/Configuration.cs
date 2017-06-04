@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json.Serialization;
 using OwinFramework.Facilities.TokenStore.Prius.Tokens;
 
 namespace OwinFramework.Facilities.TokenStore.Prius

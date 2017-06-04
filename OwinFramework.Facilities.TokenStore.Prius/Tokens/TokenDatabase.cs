@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Data;
 using System.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 using OwinFramework.Facilities.TokenStore.Prius.Records;
 using OwinFramework.Interfaces.Builder;
 using Prius.Contracts.Interfaces;
-using Urchin.Client.Interfaces;
-using ParameterDirection = Prius.Contracts.Attributes.ParameterDirection;
 
 namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
 {
@@ -71,7 +68,7 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
         {
             using (var context = _contextFactory.Create(_repositoryName))
             {
-                using (var command = _commandFactory.CreateStoredProcedure("sp_GetTokenById"))
+                using (var command = _commandFactory.CreateStoredProcedure("sp_GetToken"))
                 {
                     command.AddParameter("token", token);
                     using (var records = context.ExecuteEnumerable<TokenRecord>(command))
@@ -101,7 +98,7 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
             {
                 using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteToken"))
                 {
-                    command.AddParameter<long?>("tokenId", null);
+                    command.AddParameter<long?>("token_id", null);
                     command.AddParameter("token", token);
                     return context.ExecuteNonQuery(command) == 1;
                 }
