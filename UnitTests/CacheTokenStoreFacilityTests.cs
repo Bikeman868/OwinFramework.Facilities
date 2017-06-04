@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using OwinFramework.Facilities.TokenStore.Cache;
 using OwinFramework.Interfaces.Builder;
 using OwinFramework.InterfacesV1.Facilities;
 
@@ -13,7 +12,7 @@ namespace UnitTests
         [SetUp]
         public void Setup()
         {
-            _tokenStore = new TokenStoreFacility(
+            _tokenStore = new OwinFramework.Facilities.TokenStore.Cache.TokenStoreFacility(
                 SetupMock<ICache>(),
                 SetupMock<IConfiguration>());
         }

@@ -33,7 +33,7 @@ namespace OwinFramework.Facilities.TokenStore.Prius
             _tokenDatabase = tokenDatabase;
 
             _configurationRegistration = configuration.Register(
-                "/owinFramework/facility/tokenStore.Cache", 
+                "/owinFramework/facility/tokenStore.prius", 
                 c => _configuration = c, 
                 new Configuration());
         }
@@ -71,6 +71,10 @@ namespace OwinFramework.Facilities.TokenStore.Prius
             };
 
             var tokenRecord = _tokenDatabase.GetToken(tokenString);
+            if (tokenRecord == null) return result;
+
+            if (!string.Equals(tokenType, tokenRecord.TokenType)) return result;
+
             var token = _tokenFactory.CreateToken(tokenRecord);
             if (token == null) return result;
 

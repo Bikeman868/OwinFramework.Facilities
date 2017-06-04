@@ -7,8 +7,8 @@ using Newtonsoft.Json.Linq;
 using OwinFramework.Facilities.TokenStore.Prius.DataContracts;
 using OwinFramework.Facilities.TokenStore.Prius.Interfaces;
 using OwinFramework.Facilities.TokenStore.Prius.Rules;
+using OwinFramework.Interfaces.Builder;
 using Prius.Contracts.Interfaces.External;
-using Urchin.Client.Interfaces;
 
 namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
 {
@@ -20,11 +20,11 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
 
         public TokenFactory(
             IFactory factory,
-            IConfigurationStore configurationStore)
+            IConfiguration configuration)
         {
             _factory = factory;
 
-            _tokenTypesConfig = configurationStore.Register(
+            _tokenTypesConfig = configuration.Register(
                 "/owinFramework/facility/tokenStore.Prius/tokenTypes", 
                 TokenTypesChanged, 
                 new List<TokenTypeConfiguration>());
@@ -52,7 +52,7 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
             if (tokenRecord == null) return null;
 
             var type = tokenRecord.TokenType.ToLower();
-            var json = new JObject(tokenRecord.TokenState);
+            var json = JObject.Parse(tokenRecord.TokenState);
 
             ITokenType tokenType;
             if (_tokenTypes.TryGetValue(type, out tokenType))

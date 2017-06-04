@@ -49,7 +49,8 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Rules
 
         public void Hydrate(JObject json)
         {
-            _purposes = json.Value<List<string>>("p");
+            var purposes = json.Value<JArray>("p");
+            _purposes = purposes.Select(t => t.Value<string>()).ToList();
         }
 
         public ITokenValidator GetInstance()

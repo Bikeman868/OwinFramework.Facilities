@@ -16,7 +16,7 @@ namespace OwinFramework.Facilities.TokenStore.Prius.Tokens
 
             if (purposes != null)
             {
-                var purposeList = purposes.ToList();
+                var purposeList = purposes.Where(p => !string.IsNullOrEmpty(p)).ToList();
                 if (purposeList.Count > 0)
                     validators.Add(new TokenPurposeRule().Initialize(purposeList));
             }

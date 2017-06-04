@@ -69,8 +69,8 @@
       <HintPath>..\packages\Owin.Framework.2.4.2\lib\net45\OwinFramework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="OwinFramework.Mocks, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Owin.Framework.Mocks.2.4.2\lib\net45\OwinFramework.Mocks.dll</HintPath>
+    <Reference Include="OwinFramework.Mocks, Version=2.4.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Owin.Framework.Mocks.2.4.3\lib\net45\OwinFramework.Mocks.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Prius.Contracts, Version=2.0.1.20, Culture=neutral, processorArchitecture=MSIL">
@@ -98,7 +98,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CacheTokenStoreFacilityTests.cs" />
+    <Compile Include="PriusTokenStoreFacilityTests.cs" />
     <Compile Include="PriusIdentityStoreTests.cs" />
     <Compile Include="LocalCacheFacilityTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -119,6 +119,10 @@
     <ProjectReference Include="..\OwinFramework.Facilities.TokenStore.Cache\OwinFramework.Facilities.TokenStore.Cache.Net45.csproj">
       <Project>{69176031-c740-477f-a4cd-729e28f16f02}</Project>
       <Name>OwinFramework.Facilities.TokenStore.Cache.Net45</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\OwinFramework.Facilities.TokenStore.Prius\OwinFramework.Facilities.TokenStore.Prius.Net45.csproj">
+      <Project>{f9f87038-5f95-4bbd-be22-b39d7f3faa31}</Project>
+      <Name>OwinFramework.Facilities.TokenStore.Prius.Net45</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
