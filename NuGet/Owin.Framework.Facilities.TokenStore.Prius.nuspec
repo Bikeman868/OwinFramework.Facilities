@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Owin.Framework.Facilities.TokenStore.Prius</id>
+    <version>2.0.0</version>
+    <title>Owin.Framework.Facilities.TokenStore.Prius</title>
+    <authors>Martin Halliday</authors>
+    <owners>Martin Halliday</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Owin Framework ITokenStore facility that uses the Prius ORM to store tokens</description>
+    <copyright>Copyright Martin Halliday 2017</copyright>
+    <releaseNotes>First version</releaseNotes>
+    <summary>Adding this package to your project will provide it with an implementation of ITokenStore that uses the ICache interface to persist tokens.</summary>
+    <projectUrl>https://github.com/Bikeman868/OwinFramework.Facilities/tree/master/Owin.Framework.Facilities.TokenStore.Cache</projectUrl>
+    <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <tags>OWIN framework facility token prius</tags>
+    <dependencies>
+      <dependency id="Owin.Framework" version="2.4.2" />
+      <dependency id="Prius" version="2.0.1" />
+      <dependency id="Ioc.Modules" version="1.1.4" />
+    </dependencies>
+    <references>
+    </references>
+  </metadata>
+  <files>
+    <file src="..\OwinFramework.Facilities.TokenStore.Prius\bin\Net40\Release\OwinFramework.Facilities.TokenStore.Prius.dll" target="lib\net40"/>
+    <file src="..\OwinFramework.Facilities.TokenStore.Prius\bin\Net45\Release\OwinFramework.Facilities.TokenStore.Prius.dll" target="lib\net45"/>
+    <file src="..\*.md" target=""/>
+  </files>
+</package>
