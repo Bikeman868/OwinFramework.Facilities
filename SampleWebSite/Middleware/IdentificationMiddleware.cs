@@ -228,7 +228,7 @@ namespace SampleWebSite.Middleware
                 {
                     try
                     {
-                        if (_identityStore.ChangePassword(credential, form["newPassword"]))
+                        if (_identityStore.ChangePassword(credential, form["new-password"]))
                             SetOutcome(context, identification, "Password changed");
                         else
                             SetOutcome(context, identification, "Password was not changed");

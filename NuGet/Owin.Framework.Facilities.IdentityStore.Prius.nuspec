@@ -2,20 +2,20 @@
 <package >
   <metadata>
     <id>Owin.Framework.Facilities.IdentityStore.Prius</id>
-    <version>2.2.8</version>
+    <version>2.5.0</version>
     <title>Owin.Framework.Facilities.IdentityStore.Prius</title>
     <authors>Martin Halliday</authors>
     <owners>Martin Halliday</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Owin Framework IIdentityStore facility that stores identity information in a database using Prius ORM</description>
     <copyright>Copyright Martin Halliday 2016</copyright>
-    <releaseNotes>Fixed bugs and updated to Owin Framework version 2.3.0</releaseNotes>
+    <releaseNotes>Fixed bugs and updated to Owin Framework version 2.5.0</releaseNotes>
     <summary>Adding this package to your project will provide it with an implementation of IIdentityStore.</summary>
     <projectUrl>https://github.com/Bikeman868/OwinFramework.Facilities/tree/master/Owin.Framework.Facilities.IdentityStore.Prius</projectUrl>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <tags>OWIN framework facility identity</tags>
     <dependencies>
-      <dependency id="Owin.Framework" version="2.4.0" />
+      <dependency id="Owin.Framework" version="2.5.0" />
       <dependency id="Prius" version="2.0.1" />
       <dependency id="Ioc.Modules" version="1.1.4" />
     </dependencies>
