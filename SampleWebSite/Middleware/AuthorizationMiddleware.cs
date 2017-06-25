@@ -84,12 +84,12 @@ namespace SampleWebSite.Middleware
                 get
                 {
                     if (_requiredRoles.Any(r => !IsInRole(r))) return false;
-                    if (_requiredPermissions.Any(r => !HasPermission(r))) return false;
+                    if (_requiredPermissions.Any(r => !HasPermission(r, null))) return false;
                     return true; 
                 }
             }
 
-            public bool HasPermission(string permissionName)
+            public bool HasPermission(string permissionName, string resource)
             {
                 if (Identification == null || Identification.IsAnonymous) return false;
                 return string.Equals(permissionName, "user", StringComparison.InvariantCultureIgnoreCase);
