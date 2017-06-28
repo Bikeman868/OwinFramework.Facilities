@@ -1221,6 +1221,34 @@ BEGIN
 END//
 DELIMITER ;
 
+DELIMITER //
+CREATE PROCEDURE `sp_SearchIdentities`
+(
+	IN `searchText` VARCHAR(50)
+) DETERMINISTIC
+BEGIN
+	SELECT
+		i.`identity_id`,
+		i.`identity`,
+		c.`claim_id`,
+		c.`name`,
+		c.`value`,
+		c.`status`
+	FROM
+		tbl_identity i
+			LEFT JOIN
+		tbl_claim c ON i.identity_id = c.identity_id
+	WHERE
+		i.identity LIKE CONCAT('%', searchText, '%')
+			OR
+		(
+			c.`status` = 1
+				AND
+			c.value LIKE CONCAT('%', searchText, '%')
+		);
+END//
+DELIMITER ;
+
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IF(@OLD_FOREIGN_KEY_CHECKS IS NULL, 1, @OLD_FOREIGN_KEY_CHECKS) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

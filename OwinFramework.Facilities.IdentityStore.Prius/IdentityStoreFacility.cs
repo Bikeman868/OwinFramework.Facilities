@@ -63,7 +63,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             return identity;
         }
 
-        public void DeleteClaim(string identity, string claimName)
+        public string DeleteClaim(string identity, string claimName)
         {
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
@@ -88,6 +88,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     }
                 }
             }
+            return identity;
         }
 
         public IList<IIdentityClaim> GetClaims(string identity)
@@ -105,7 +106,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             }
         }
 
-        public void UpdateClaim(string identity, IIdentityClaim claim)
+        public string UpdateClaim(string identity, IIdentityClaim claim)
         {
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
@@ -141,8 +142,49 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     context.ExecuteNonQuery(command);
                 }
             }
+            return identity;
         }
 
+        public IIdentitySearchResult Search(string searchText, string pagerToken, int maxResultCount, string claimName)
+        {
+            int skip;
+            if (string.IsNullOrEmpty(pagerToken) || !int.TryParse(pagerToken, out skip))
+                skip = 0;
+
+            if (maxResultCount < 1) maxResultCount = 1;
+            if (maxResultCount > 50) maxResultCount = 50;
+
+            List<string> identities;
+
+            using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
+            {
+                using (var command = _commandFactory.CreateStoredProcedure("sp_SearchIdentities"))
+                {
+                    command.AddParameter("searchText", searchText);
+                    using (var claims = context.ExecuteEnumerable<IdentityClaimRecord>(command))
+                    {
+                        identities = claims
+                            .Select(c => c.Identity)
+                            .Distinct()
+                            .Skip(skip)
+                            .Take(maxResultCount)
+                            .ToList();
+                    }
+                }
+            }
+
+            return new IdentitySearchResult
+            {
+                PagerToken = (skip + maxResultCount).ToString(),
+                Identities = identities
+                    .Select(i => new MatchingIdentity
+                    {
+                        Identity = i,
+                        Claims = GetClaims(i)
+                    } as IMatchingIdentity)
+                    .ToList()
+            };
+        }
 
         #region Certificates
 
@@ -772,6 +814,17 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                 return new List<string>();
             return purposes.Split(',');
         }
+        
+        private class IdentitySearchResult: IIdentitySearchResult
+        {
+            public string PagerToken { get; set; }
+            public IList<IMatchingIdentity> Identities { get; set; }
+        }
 
+        private class MatchingIdentity : IMatchingIdentity
+        {
+            public string Identity { get; set; }
+            public IList<IIdentityClaim> Claims { get; set; }
+        }
     }
 }
