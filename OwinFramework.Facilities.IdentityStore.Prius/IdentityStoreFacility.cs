@@ -18,7 +18,7 @@ using Prius.Contracts.Interfaces.Connections;
 
 namespace OwinFramework.Facilities.IdentityStore.Prius
 {
-    internal class IdentityStoreFacility: IIdentityStore
+    internal class IdentityStoreFacility: IIdentityStore, IIdentityDirectory
     {
         private readonly IContextFactory _contextFactory;
         private readonly ICommandFactory _commandFactory;
@@ -39,6 +39,8 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                 c => _configuration = c, 
                 new Configuration());
         }
+
+        #region IIdentityDirectory
 
         public string CreateIdentity()
         {
@@ -185,6 +187,8 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     .ToList()
             };
         }
+
+        #endregion
 
         #region Certificates
 

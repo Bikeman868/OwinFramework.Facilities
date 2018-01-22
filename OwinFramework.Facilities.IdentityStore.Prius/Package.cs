@@ -24,6 +24,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             {
                 // Interfaces implemented in this package
                 new IocRegistration().Init<IIdentityStore, IdentityStoreFacility>(),
+                new IocRegistration().Init<IIdentityDirectory, IdentityStoreFacility>(),
 
                 // These parts of the OWIN Framework are required by this package
                 new IocRegistration().Init<IConfiguration>(),

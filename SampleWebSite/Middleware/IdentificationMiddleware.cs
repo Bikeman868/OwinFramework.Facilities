@@ -30,6 +30,7 @@ namespace SampleWebSite.Middleware
     public class IdentificationMiddleware: IMiddleware<IIdentification>, IRoutingProcessor
     {
         private readonly IIdentityStore _identityStore;
+        private readonly IIdentityDirectory _identityDirectory;
         private readonly ITokenStore _tokenStore;
 
         private readonly IList<IDependency> _dependencies = new List<IDependency>();
@@ -51,9 +52,11 @@ namespace SampleWebSite.Middleware
 
         public IdentificationMiddleware(
             IIdentityStore identityStore, 
+            IIdentityDirectory identityDirectory,
             ITokenStore tokenStore)
         {
             _identityStore = identityStore;
+            _identityDirectory = identityDirectory;
             _tokenStore = tokenStore;
 
             this.RunAfter<ISession>(null, false);
@@ -77,7 +80,7 @@ namespace SampleWebSite.Middleware
                     SetAuthentication(context, authenticationResult);
                 }
             }
-            var identification = new Identification(cookie, _identityStore.GetClaims(cookie));
+            var identification = new Identification(cookie, _identityDirectory.GetClaims(cookie));
 
             context.SetFeature<IIdentification>(identification);
             context.SetFeature<IUpstreamIdentification>(identification);
@@ -150,13 +153,13 @@ namespace SampleWebSite.Middleware
         private void Register(IOwinContext context, Identification identification)
         {
             var form = context.Request.ReadFormAsync().Result;
-            var identity = _identityStore.CreateIdentity();
+            var identity = _identityDirectory.CreateIdentity();
             try
             {
                 if (_identityStore.AddCredentials(identity, form["username"], form["password"]))
                 {
                     identification.Identity = identity;
-                    identification.Claims = _identityStore.GetClaims(identity);
+                    identification.Claims = _identityDirectory.GetClaims(identity);
 
                     var result = _identityStore.AuthenticateWithCredentials(form["username"], form["password"]);
                     if (result.Status == AuthenticationStatus.Authenticated)
@@ -181,7 +184,7 @@ namespace SampleWebSite.Middleware
             if (result.Status == AuthenticationStatus.Authenticated)
             {
                 identification.Identity = result.Identity;
-                identification.Claims = _identityStore.GetClaims(result.Identity);
+                identification.Claims = _identityDirectory.GetClaims(result.Identity);
 
                 context.Response.Cookies.Append(IdentityCookie, result.Identity);
                 context.Response.Cookies.Append(RememberMeCookie, result.RememberMeToken);
@@ -313,7 +316,7 @@ namespace SampleWebSite.Middleware
                         {
                             SetOutcome(context, identification, "Password succesfully reset");
                             identification.Identity = credential.Identity;
-                            identification.Claims = _identityStore.GetClaims(credential.Identity);
+                            identification.Claims = _identityDirectory.GetClaims(credential.Identity);
 
                             context.Response.Cookies.Append(IdentityCookie, credential.Identity);
                             context.Response.Cookies.Delete(RememberMeCookie);
@@ -353,7 +356,7 @@ namespace SampleWebSite.Middleware
             var session = context.GetFeature<ISession>();
             if (session == null) return;
 
-            var claims = _identityStore.GetClaims(authenticationResult.Identity);
+            var claims = _identityDirectory.GetClaims(authenticationResult.Identity);
             session.Set("claims", string.Join(", ", claims.Select(c => c.Name + (c.Status == ClaimStatus.Verified ? " = " : " ~ ") + c.Value)));
 
             session.Set("identity", authenticationResult.Identity);

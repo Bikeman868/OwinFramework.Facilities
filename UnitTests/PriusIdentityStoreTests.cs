@@ -18,7 +18,7 @@ namespace UnitTests
     [TestFixture]
     public class PriusIdentityStoreTests: TestBase
     {
-        private IIdentityStore _identityStore;
+        private IdentityStoreFacility _identityStore;
 
         [SetUp]
         public void Setup()
