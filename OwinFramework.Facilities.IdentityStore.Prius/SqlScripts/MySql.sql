@@ -1241,11 +1241,7 @@ BEGIN
 	WHERE
 		i.identity LIKE CONCAT('%', searchText, '%')
 			OR
-		(
-			c.`status` = 1
-				AND
-			c.value LIKE CONCAT('%', searchText, '%')
-		);
+		c.value LIKE CONCAT('%', searchText, '%');
 END//
 DELIMITER ;
 
