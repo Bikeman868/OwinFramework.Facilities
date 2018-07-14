@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using OwinFramework.Builder;
 using OwinFramework.Facilities.IdentityStore.Prius.DataContracts;
@@ -22,6 +20,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
     {
         private readonly IContextFactory _contextFactory;
         private readonly ICommandFactory _commandFactory;
+        private readonly IPasswordHasher _passwordHasher;
 
         private readonly IDisposable _configurationChange;
         private Configuration _configuration;
@@ -29,10 +28,12 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
         public IdentityStoreFacility(
             IConfiguration configuration,
             IContextFactory contextFactory,
-            ICommandFactory commandFactory)
+            ICommandFactory commandFactory,
+            IPasswordHasher passwordHasher)
         {
             _contextFactory = contextFactory;
             _commandFactory = commandFactory;
+            _passwordHasher = passwordHasher;
 
             _configurationChange = configuration.Register(
                 "/owinFramework/facility/identityStore.Prius",
@@ -232,14 +233,17 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
         public bool AddCredentials(string identity, string userName, string password, bool replaceExisting = true, IEnumerable<string> purposes = null)
         {
             CheckUserNameAllowed(userName);
-            CheckPasswordAllowed(password);
+            
+            var checkPasswordResult = _passwordHasher.CheckPasswordAllowed(identity, password);
+            if (!checkPasswordResult.IsAllowed)
+                throw new InvalidPasswordException(checkPasswordResult.ValidationError);
 
             var purposeString = JoinPurposes(purposes);
 
             byte[] hash;
             byte[] salt;
-            int version;
-            ComputeHash(password, out version, out salt, out hash);
+            int? version = null;
+            _passwordHasher.ComputeHash(identity, password, ref version, out salt, out hash);
 
             bool success;
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
@@ -336,7 +340,7 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             if (result.Status == AuthenticationStatus.Authenticated)
             {
                 byte[] hash;
-                ComputeHash(password, credential.Version, credential.Salt, out hash);
+                _passwordHasher.ComputeHash(password, credential.Version, credential.Salt, out hash);
 
                 if (hash.Length != credential.Hash.Length)
                 {
@@ -447,12 +451,14 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
         public bool ChangePassword(ICredential credential, string newPassword)
         {
-            CheckPasswordAllowed(newPassword);
+            var checkPasswordResult = _passwordHasher.CheckPasswordAllowed(credential.Identity, newPassword);
+            if (!checkPasswordResult.IsAllowed)
+                throw new InvalidPasswordException(checkPasswordResult.ValidationError);
 
             byte[] hash;
             byte[] salt;
-            int version;
-            ComputeHash(newPassword, out version, out salt, out hash);
+            int? version = null;
+            _passwordHasher.ComputeHash(credential.Identity, newPassword, ref version, out salt, out hash);
 
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
@@ -611,54 +617,6 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             if (!regex.IsMatch(userName))
                 throw new InvalidUserNameException("User name contains invalid characters, it must match the pattern "
                     + _configuration.UserNameRegex);
-        }
-
-        private void CheckPasswordAllowed(string password)
-        {
-            if (password == null || password.Length < _configuration.MinimumPasswordLength)
-                throw new InvalidPasswordException("This password is too short");
-
-            if (password.Length > _configuration.MaximumPasswordLength)
-                throw new InvalidPasswordException("This password is too long");
-
-            var regex = new Regex(_configuration.PasswordRegex);
-            if (!regex.IsMatch(password))
-                throw new InvalidPasswordException("Password contains invalid characters, it must match the pattern "
-                    + _configuration.PasswordRegex);
-        }
-
-        private void ComputeHash(string password, out int version, out byte[] salt, out byte[] hash)
-        {
-            version = 1;
-
-            var passwordBytes = Encoding.UTF8.GetBytes(password);
-            salt = Guid.NewGuid().ToByteArray();
-
-            var dataToHash = new byte[salt.Length + passwordBytes.Length];
-            salt.CopyTo(dataToHash, 0);
-            passwordBytes.CopyTo(dataToHash, salt.Length);
-
-            var hashProvider = new SHA256CryptoServiceProvider();
-            hash = hashProvider.ComputeHash(dataToHash);
-        }
-
-        private void ComputeHash(string password, int version, byte[] salt, out byte[] hash)
-        {
-            byte[] dataToHash;
-            HashAlgorithm hashProvider;
-
-            var passwordBytes = Encoding.UTF8.GetBytes(password);
-            if (version == 1)
-            {
-                dataToHash = new byte[salt.Length + passwordBytes.Length];
-                salt.CopyTo(dataToHash, 0);
-                passwordBytes.CopyTo(dataToHash, salt.Length);
-                hashProvider = new SHA256CryptoServiceProvider();
-            }
-            else
-                throw new IdentityStoreException("Unsupported version of password hashing scheme. This database may have been created with a newer version of this software.");
-
-            hash = hashProvider.ComputeHash(dataToHash);
         }
 
         #endregion

@@ -49,10 +49,14 @@ namespace UnitTests
             var mockContextFactory = GetMock<MockContextFactory, IContextFactory>();
             mockContextFactory.MockedRepository = mockedRepository;
 
+            var mockConfiguration = SetupMock<IConfiguration>();
+            var passwordHasher = new PasswordHasher(mockConfiguration);
+
             _identityStore = new IdentityStoreFacility(
-                SetupMock<IConfiguration>(),
+                mockConfiguration,
                 SetupMock<IContextFactory>(),
-                SetupMock<ICommandFactory>());
+                SetupMock<ICommandFactory>(),
+                passwordHasher);
         }
 
         [Test]
