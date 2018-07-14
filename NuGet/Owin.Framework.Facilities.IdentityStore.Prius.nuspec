@@ -15,9 +15,9 @@
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
     <tags>OWIN framework facility identity</tags>
     <dependencies>
-      <dependency id="Owin.Framework" version="2.6.2" />
-      <dependency id="Prius" version="2.0.4" />
-      <dependency id="Ioc.Modules" version="1.2.1" />
+      <dependency id="Owin.Framework" version="2.6.7" />
+      <dependency id="Prius" version="2.0.6" />
+      <dependency id="Ioc.Modules" version="1.3.1" />
     </dependencies>
     <references>
     </references>

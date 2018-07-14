@@ -82,12 +82,19 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
                 if (claim != null)
                 {
-                    using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteClaim"))
+                    try
                     {
-                        command.AddParameter("who_identity", identity);
-                        command.AddParameter("reason", "Delete claim");
-                        command.AddParameter("claim_id", claim.ClaimId);
-                        context.ExecuteNonQuery(command);
+                        using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteClaim"))
+                        {
+                            command.AddParameter("who_identity", identity);
+                            command.AddParameter("reason", "Delete claim");
+                            command.AddParameter("claim_id", claim.ClaimId);
+                            context.ExecuteNonQuery(command);
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        throw new IdentityStoreException("Failed to delete '" + claimName + "' claim from identity " + identity, ex);
                     }
                 }
             }
@@ -125,24 +132,38 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
                 if (existingClaim != null)
                 {
-                    using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteClaim"))
+                    try
                     {
-                        command.AddParameter("who_identity", identity);
-                        command.AddParameter("reason", "Update claim");
-                        command.AddParameter("claim_id", existingClaim.ClaimId);
-                        context.ExecuteNonQuery(command);
+                        using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteClaim"))
+                        {
+                            command.AddParameter("who_identity", identity);
+                            command.AddParameter("reason", "Update claim");
+                            command.AddParameter("claim_id", existingClaim.ClaimId);
+                            context.ExecuteNonQuery(command);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new IdentityStoreException("Failed to delete '" + existingClaim.Name + "' claim from identity " + existingClaim.Identity, ex);
                     }
                 }
 
-                using (var command = _commandFactory.CreateStoredProcedure("sp_AddClaim"))
+                try
                 {
-                    command.AddParameter("who_identity", identity);
-                    command.AddParameter("reason", "Update claim");
-                    command.AddParameter("identity", identity);
-                    command.AddParameter("name", claim.Name);
-                    command.AddParameter("value", claim.Value);
-                    command.AddParameter("status", (int)claim.Status);
-                    context.ExecuteNonQuery(command);
+                    using (var command = _commandFactory.CreateStoredProcedure("sp_AddClaim"))
+                    {
+                        command.AddParameter("who_identity", identity);
+                        command.AddParameter("reason", "Update claim");
+                        command.AddParameter("identity", identity);
+                        command.AddParameter("name", claim.Name);
+                        command.AddParameter("value", claim.Value);
+                        command.AddParameter("status", (int)claim.Status);
+                        context.ExecuteNonQuery(command);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new IdentityStoreException("Failed to add '" + claim.Name + "' claim to identity " + identity, ex);
                 }
             }
             return identity;
@@ -253,29 +274,43 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
 
                 if (replaceExisting)
                 {
-                    using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteIdentityCredentials"))
+                    try
                     {
-                        command.AddParameter("who_identity", identity);
-                        command.AddParameter("reason", "Replace existing");
-                        command.AddParameter("identity", identity);
-                        context.ExecuteNonQuery(command);
+                        using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteIdentityCredentials"))
+                        {
+                            command.AddParameter("who_identity", identity);
+                            command.AddParameter("reason", "Replace existing");
+                            command.AddParameter("identity", identity);
+                            context.ExecuteNonQuery(command);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new IdentityStoreException("Failed to delete existing credentials for identity " + identity, ex);
                     }
                 }
 
-                using (var command = _commandFactory.CreateStoredProcedure("sp_AddCredential"))
-                {
-                    command.AddParameter("who_identity", identity);
-                    command.AddParameter("reason", "Add credentials");
-                    command.AddParameter("identity", identity);
-                    command.AddParameter("userName", userName);
-                    command.AddParameter("purposes", purposeString);
-                    command.AddParameter("version", version);
-                    command.AddParameter("hash", hash);
-                    command.AddParameter("salt", salt);
-                    using (var reader = context.ExecuteReader(command))
+                try
+                { 
+                    using (var command = _commandFactory.CreateStoredProcedure("sp_AddCredential"))
                     {
-                        success = reader.Read();
+                        command.AddParameter("who_identity", identity);
+                        command.AddParameter("reason", "Add credentials");
+                        command.AddParameter("identity", identity);
+                        command.AddParameter("userName", userName);
+                        command.AddParameter("purposes", purposeString);
+                        command.AddParameter("version", version);
+                        command.AddParameter("hash", hash);
+                        command.AddParameter("salt", salt);
+                        using (var reader = context.ExecuteReader(command))
+                        {
+                            success = reader.Read();
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    throw new IdentityStoreException("Failed to add credentials for identity " + identity, ex);
                 }
             }
 
@@ -323,10 +358,17 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     {
                         using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
                         {
-                            using (var command = _commandFactory.CreateStoredProcedure("sp_UnlockUsername"))
+                            try
+                            { 
+                                using (var command = _commandFactory.CreateStoredProcedure("sp_UnlockUsername"))
+                                {
+                                    command.AddParameter("userName", userName);
+                                    context.ExecuteNonQuery(command);
+                                }
+                            }
+                            catch (Exception ex)
                             {
-                                command.AddParameter("userName", userName);
-                                context.ExecuteNonQuery(command);
+                                throw new IdentityStoreException("Failed to unlock user " + userName, ex);
                             }
                         }
                     }
@@ -366,15 +408,22 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     result.RememberMeToken = Guid.NewGuid().ToShortString(_configuration.MixedCaseTokens);
                     using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
                     {
-                        using (var command = _commandFactory.CreateStoredProcedure("sp_AuthenticateSuccess"))
+                        try
                         {
-                            command.AddParameter("identity", credential.Identity);
-                            command.AddParameter("purposes", credential.Purposes);
-                            command.AddParameter("remember_me_token", result.RememberMeToken);
-                            command.AddParameter("authenticate_method", "Credentials");
-                            command.AddParameter("method_id", credential.CredentialId);
-                            command.AddParameter("expires", DateTime.UtcNow + _configuration.RememberMeFor);
-                            context.ExecuteNonQuery(command);
+                            using (var command = _commandFactory.CreateStoredProcedure("sp_AuthenticateSuccess"))
+                            {
+                                command.AddParameter("identity", credential.Identity);
+                                command.AddParameter("purposes", credential.Purposes);
+                                command.AddParameter("remember_me_token", result.RememberMeToken);
+                                command.AddParameter("authenticate_method", "Credentials");
+                                command.AddParameter("method_id", credential.CredentialId);
+                                command.AddParameter("expires", DateTime.UtcNow + _configuration.RememberMeFor);
+                                context.ExecuteNonQuery(command);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new IdentityStoreException("Failed to record successful authentication for identity " + credential.Identity, ex);
                         }
                     }
                     break;
@@ -384,21 +433,37 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
                     using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
                     {
                         int failCount;
-                        using (var command = _commandFactory.CreateStoredProcedure("sp_AuthenticateFail"))
+
+                        try
                         {
-                            command.AddParameter("identity", credential.Identity);
-                            command.AddParameter("authenticate_method", "Credentials");
-                            command.AddParameter("method_id", credential.CredentialId);
-                            var failCountParam = command.AddParameter("fail_count",SqlDbType.Int);
-                            context.ExecuteNonQuery(command);
-                            failCount = (int)Convert.ChangeType(failCountParam.Value, typeof(int));
+                            using (var command = _commandFactory.CreateStoredProcedure("sp_AuthenticateFail"))
+                            {
+                                command.AddParameter("identity", credential.Identity);
+                                command.AddParameter("authenticate_method", "Credentials");
+                                command.AddParameter("method_id", credential.CredentialId);
+                                var failCountParam = command.AddParameter("fail_count", SqlDbType.Int);
+                                context.ExecuteNonQuery(command);
+                                failCount = (int)Convert.ChangeType(failCountParam.Value, typeof(int));
+                            }
                         }
+                        catch (Exception ex)
+                        {
+                            throw new IdentityStoreException("Failed to record failed authentication for identity " + credential.Identity, ex);
+                        }
+
                         if (failCount >= _configuration.FailedLoginsToLock)
                         {
-                            using (var command = _commandFactory.CreateStoredProcedure("sp_LockUsername"))
+                            try
                             {
-                                command.AddParameter("userName", userName);
-                                context.ExecuteNonQuery(command);
+                                using (var command = _commandFactory.CreateStoredProcedure("sp_LockUsername"))
+                                {
+                                    command.AddParameter("userName", userName);
+                                    context.ExecuteNonQuery(command);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new IdentityStoreException("Failed to lock user '" + userName + "' after too many failed authentication attempts", ex);
                             }
                         }
                     }
@@ -483,13 +548,20 @@ namespace OwinFramework.Facilities.IdentityStore.Prius
             bool success;
             using (var context = _contextFactory.Create(_configuration.PriusRepositoryName))
             {
-                using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteUsernameCredentials"))
+                try
                 {
-                    command.AddParameter("who_identity", credential.Identity);
-                    command.AddParameter("reason", "Delete credential");
-                    command.AddParameter("username", credential.Username);
-                    var rowsAffected = context.ExecuteNonQuery(command);
-                    success = rowsAffected > 0;
+                    using (var command = _commandFactory.CreateStoredProcedure("sp_DeleteUsernameCredentials"))
+                    {
+                        command.AddParameter("who_identity", credential.Identity);
+                        command.AddParameter("reason", "Delete credential");
+                        command.AddParameter("username", credential.Username);
+                        var rowsAffected = context.ExecuteNonQuery(command);
+                        success = rowsAffected > 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new IdentityStoreException("Failed to credential for user '" + credential.Username + "'", ex);
                 }
             }
 
