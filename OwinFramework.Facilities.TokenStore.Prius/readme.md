@@ -48,6 +48,7 @@ For example the token can not be used more than 2 times in any 24 hour period.
 For example a password reset token might be configured to expire in 7 days and can only be used once. This is how to
 configure that in Urchin.
 
+```
    {
      "owinFramework": {
        "facility": {
@@ -65,3 +66,4 @@ configure that in Urchin.
        }
      }
    }
+```
