@@ -1,5 +1,3 @@
-# OWIN Cache TokenStore Facility
-
 Add this package to your solution to provide the OwinFramework with the `ITokenStore` facility.
 
 This implementation of `ITokenStore` stores tokens using the `ICache` facility. Select an implementation of `ICache` that
