@@ -1,5 +1,3 @@
-# OWIN Prius TokenStore Facility
-
 Add this package to your solution to provide the OwinFramework with the `ITokenStore` facility.
 
 This implementation of `ITokenStore` stores tokens using the Prius ORM. Every time a token is updated
