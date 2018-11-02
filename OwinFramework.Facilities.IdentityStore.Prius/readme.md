@@ -1,5 +1,3 @@
-# OWIN Identity Store Facility
-
 Add this package to your solution to provide the OwinFramework with the `IIdentityStore` facility.
 
 This implementation of `IIdentityStore` stores user identitifcation information in a database
