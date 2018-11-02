@@ -1,5 +1,3 @@
-# OwinFramework.Facilities
-
 The OWIN Framework defines facilities that are useful for middleware developers. Facilities are
 just interface definitions in the OWIN Framework, this project contains concrete implementations
 for some of those interfaces.
