@@ -78,14 +78,14 @@
     <Reference Include="OwinFramework.Urchin, Version=2.7.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Owin.Framework.Urchin.2.7.0\lib\net40\OwinFramework.Urchin.dll</HintPath>
     </Reference>
-    <Reference Include="Prius.Contracts, Version=2.1.0.26, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Prius.2.1.0\lib\net40\Prius.Contracts.dll</HintPath>
+    <Reference Include="Prius.Contracts, Version=2.1.1.27, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Prius.2.1.1\lib\net40\Prius.Contracts.dll</HintPath>
     </Reference>
-    <Reference Include="Prius.Mocks, Version=2.1.0.26, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Prius.Mocks.2.1.0\lib\net40\Prius.Mocks.dll</HintPath>
+    <Reference Include="Prius.Mocks, Version=2.1.1.27, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Prius.Mocks.2.1.1\lib\net40\Prius.Mocks.dll</HintPath>
     </Reference>
-    <Reference Include="Prius.Orm, Version=2.1.0.26, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Prius.2.1.0\lib\net40\Prius.Orm.dll</HintPath>
+    <Reference Include="Prius.Orm, Version=2.1.1.27, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Prius.2.1.1\lib\net40\Prius.Orm.dll</HintPath>
     </Reference>
     <Reference Include="Svg, Version=2.2.1.39233, Culture=neutral, PublicKeyToken=12a0bac221edeae2, processorArchitecture=MSIL">
       <HintPath>..\packages\Svg.2.3.0\lib\net35\Svg.dll</HintPath>
